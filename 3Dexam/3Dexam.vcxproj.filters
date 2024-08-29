@@ -41,7 +41,7 @@
     <ClCompile Include="core\application\Application.cpp">
       <Filter>core\application</Filter>
     </ClCompile>
-    <ClCompile Include="3Dexam.cpp" />
+    <ClCompile Include="OpenGLFall2024.cpp" />
     <ClCompile Include="core\utility\MathLibrary.cpp">
       <Filter>core\utility</Filter>
     </ClCompile>

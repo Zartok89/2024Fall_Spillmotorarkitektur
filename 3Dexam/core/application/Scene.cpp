@@ -1,4 +1,8 @@
+#define GLM_ENABLE_EXPERIMENTAL
+
 #include <memory>
+#include <glm/glm.hpp>  
+#include <glm/gtx/compatibility.hpp> 
 #include "Scene.h"
 
 Scene::Scene() = default;
@@ -68,36 +72,9 @@ void Scene::LoadActors()
 	glm::vec3 TempVec = glm::vec3{ 0.f, 0.f, 0.f };
 	for (int i = 0; i <= AmountOfBalls; i++)
 	{
-		mSceneActors["SphereObject " + std::to_string(i)] = (std::make_shared<Actor>("SphereMesh", mSceneMeshes["SphereMesh"], TempVec, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 0.1f, Actor::ActorType::STATIC, mShader, "BlueTexture"));
+		mSceneActors["SphereObject " + std::to_string(i)] = (std::make_shared<Actor>("SphereMesh", mSceneMeshes["SphereMesh"], TempVec, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 0.1f, Actor::ActorType::BOUNCINGBALL, mShader, "BlueTexture"));
 		TempVec = RandomNumberGenerator->GeneratorRandomVector(0, 100);
 	}
-
-	///*
-	// * Scene 2D shapes
-	// */
-	// //mSceneActors["Triangle"] = (std::make_shared<Actor>("TriangleMesh", glm::vec3{ 0.f, 3.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 90.f, 1.f, Actor::ActorType::STATIC, mShader, "BlueTexture"));
-	//mSceneActors["Square"] = (std::make_shared<Actor>("SquareMesh", mSceneMeshes["SquareMesh"], glm::vec3{ 0.f, 0.f, -20.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 50.f, Actor::ActorType::STATIC, mShader, "SkyTexture"));
-
-	///*
-	// * Scene objects
-	// */
-	//mSceneActors["NPCLineFollow"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ 4.f, 0.f, -0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 0.5f, Actor::ActorType::NPC_FOLLOWLINE, mShader));
-	//mSceneActors["NPCCurveFollow"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 6.f, 0.f, -0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 0.5f, Actor::ActorType::NPC_FOLLOWCURVE, mShader, "BlueTexture"));
-	//mSceneActors["StaticCube"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader, "BlueTexture"));
-	//mSceneActors["PlayerCube"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ -4.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::PLAYER, mShader));
-	//mSceneActors["NPCCube"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, -3.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::NPC, mShader, "BlueTexture"));
-
-	///*
-	// * Scene terrain
-	// */
-	////mSceneActors["Terrain"] = (std::make_shared<Actor>("FlatTerrainMesh", glm::vec3{ 0.f , -0.55f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader));
-	//mSceneActors["Terrain"] = (std::make_shared<Actor>("CurvedTerrainMesh", mSceneMeshes["CurvedTerrainMesh"], glm::vec3{ 0.f , -0.55f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
-
-	///*
-	// * Scene math functions
-	// */
-	//mSceneActors["LineTest"] = (std::make_shared<Actor>("LineMesh", mSceneMeshes["LineMesh"], glm::vec3{ -10.f, -1.f, -5.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader));
-	//mSceneActors["LineCurve"] = (std::make_shared<Actor>("LineCurvedMesh", mSceneMeshes["LineCurvedMesh"], glm::vec3{ 10.f, -1.f, -5.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::CURVETOFOLLOW, mShader));
 }
 
 void Scene::LoadVariables()
@@ -108,7 +85,7 @@ void Scene::LoadVariables()
 	npcMovementSpeed = 2.f;
 }
 
-void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std::shared_ptr<Actor>>::value_type& actorEntry) 
+void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std::shared_ptr<Actor>>::value_type& actorEntry)
 {
 	auto& actor = actorEntry.second;
 	glm::mat4 transform;
@@ -121,7 +98,7 @@ void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std
 
 	case Actor::NPC:
 		actor->mActorPosition.x += mNpcSpeed * deltaTime;
-		if (actor->mActorPosition.x >= 5 || actor->mActorPosition.x <= -5) 
+		if (actor->mActorPosition.x >= 5 || actor->mActorPosition.x <= -5)
 		{
 			mNpcSpeed *= -1.f;
 		}
@@ -134,14 +111,14 @@ void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std
 		break;
 
 	case Actor::NPC_FOLLOWCURVE:
-		if (!NpcFollowCurve(deltaTime, actor, "LineCurvedMesh", "LineCurve")) 
+		if (!NpcFollowCurve(deltaTime, actor, "LineCurvedMesh", "LineCurve"))
 		{
 			// Handle non-follow case if necessary
 		}
 		break;
 
 	case Actor::NPC_FOLLOWLINE:
-		if (!NpcFollowCurve(deltaTime, actor, "LineMesh", "LineTest")) 
+		if (!NpcFollowCurve(deltaTime, actor, "LineMesh", "LineTest"))
 		{
 			// Handle non-follow case if necessary
 		}
@@ -149,12 +126,16 @@ void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std
 
 	case Actor::PLAYER:
 		glm::vec3 playerHeight;
-		if (BarycentricCalculations(mSceneActors["Terrain"], actor->mActorPosition, playerHeight)) 
+		if (BarycentricCalculations(mSceneActors["Terrain"], actor->mActorPosition, playerHeight))
 		{
 			actor->SetActorPosition(playerHeight);
 		}
 		transform = actor->GetActorTransform();
 		mShader->setMat4("model", transform);
+		break;
+
+	case Actor::BOUNCINGBALL:
+		BallBouncingAround(deltaTime, actor);
 		break;
 
 	default:
@@ -233,3 +214,47 @@ bool Scene::NpcFollowCurve(float deltaTime, std::shared_ptr<Actor>& actors, std:
 	}
 	return false;
 }
+
+void Scene::BallBouncingAround(float deltaTime, std::shared_ptr<Actor>& actor)
+{
+    glm::vec3 targetPosition = RandomNumberGenerator->GeneratorRandomVector(0, 100);  
+    glm::vec3 currentPosition = actor->GetActorPosition();  
+
+    float lerpFactor = 0.3f; 
+
+    glm::vec3 newPosition = glm::lerp(currentPosition, targetPosition, lerpFactor * deltaTime);  
+
+    actor->SetActorPosition(newPosition);
+}
+
+
+// Gammel eksamen-scene
+//void Scene::LoadActors()
+//{
+//	/*
+//	 * Scene 2D shapes
+//	 */
+//	 //mSceneActors["Triangle"] = (std::make_shared<Actor>("TriangleMesh", glm::vec3{ 0.f, 3.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 90.f, 1.f, Actor::ActorType::STATIC, mShader, "BlueTexture"));
+//	mSceneActors["Square"] = (std::make_shared<Actor>("SquareMesh", mSceneMeshes["SquareMesh"], glm::vec3{ 0.f, 0.f, -20.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 50.f, Actor::ActorType::STATIC, mShader, "SkyTexture"));
+//
+//	/*
+//	 * Scene objects
+//	 */
+//	mSceneActors["NPCLineFollow"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ 4.f, 0.f, -0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 0.5f, Actor::ActorType::NPC_FOLLOWLINE, mShader));
+//	mSceneActors["NPCCurveFollow"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 6.f, 0.f, -0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 0.5f, Actor::ActorType::NPC_FOLLOWCURVE, mShader, "BlueTexture"));
+//	mSceneActors["StaticCube"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader, "BlueTexture"));
+//	mSceneActors["PlayerCube"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ -4.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::PLAYER, mShader));
+//	mSceneActors["NPCCube"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, -3.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::NPC, mShader, "BlueTexture"));
+//
+//	/*
+//	 * Scene terrain
+//	 */
+//	//mSceneActors["Terrain"] = (std::make_shared<Actor>("FlatTerrainMesh", glm::vec3{ 0.f , -0.55f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader));
+//	mSceneActors["Terrain"] = (std::make_shared<Actor>("CurvedTerrainMesh", mSceneMeshes["CurvedTerrainMesh"], glm::vec3{ 0.f , -0.55f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
+//
+//	/*
+//	 * Scene math functions
+//	 */
+//	mSceneActors["LineTest"] = (std::make_shared<Actor>("LineMesh", mSceneMeshes["LineMesh"], glm::vec3{ -10.f, -1.f, -5.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader));
+//	mSceneActors["LineCurve"] = (std::make_shared<Actor>("LineCurvedMesh", mSceneMeshes["LineCurvedMesh"], glm::vec3{ 10.f, -1.f, -5.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::CURVETOFOLLOW, mShader));
+//}

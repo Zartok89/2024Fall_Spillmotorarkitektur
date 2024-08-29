@@ -16,7 +16,7 @@
  */
 const unsigned int screenWidth = 800 * 2;
 const unsigned int screenHeight = 600 * 2;
-const char* windowTitle = "Exam Application";
+const char* windowTitle = "OpenGLFall2024";
 
 void LeastSquaresMethodExample(std::shared_ptr<LeastSquaresMethod> leastSPtr)
 {
