@@ -1,0 +1,128 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="core">
+      <UniqueIdentifier>{0551637e-4108-4cc6-bf1b-3967278c3ef3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core\graphical">
+      <UniqueIdentifier>{7ccfc94d-1dfd-48ca-933b-9fd21da80994}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core\application">
+      <UniqueIdentifier>{66b5b84f-8ae8-4e8e-a2aa-ff96cb0d3030}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="incl_libs">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="core\utility">
+      <UniqueIdentifier>{9f25d445-e5a0-4df8-80b2-0704ee38088b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core\shader">
+      <UniqueIdentifier>{ed0f5bff-fa89-424b-8dc5-8cbc25eb47c6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="glad.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="core\graphical\Mesh.cpp">
+      <Filter>core\graphical</Filter>
+    </ClCompile>
+    <ClCompile Include="core\shader\Shader.cpp">
+      <Filter>core\shader</Filter>
+    </ClCompile>
+    <ClCompile Include="core\shader\ShaderFileLoader.cpp">
+      <Filter>core\shader</Filter>
+    </ClCompile>
+    <ClCompile Include="core\application\Application.cpp">
+      <Filter>core\application</Filter>
+    </ClCompile>
+    <ClCompile Include="3Dexam.cpp" />
+    <ClCompile Include="core\utility\MathLibrary.cpp">
+      <Filter>core\utility</Filter>
+    </ClCompile>
+    <ClCompile Include="core\graphical\Camera.cpp">
+      <Filter>core\graphical</Filter>
+    </ClCompile>
+    <ClCompile Include="core\application\Scene.cpp">
+      <Filter>core\application</Filter>
+    </ClCompile>
+    <ClCompile Include="core\graphical\Actor.cpp">
+      <Filter>core\graphical</Filter>
+    </ClCompile>
+    <ClCompile Include="core\graphical\Texture.cpp">
+      <Filter>core\graphical</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utility\ReadWriteFiles.cpp">
+      <Filter>core\utility</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utility\Controller.cpp">
+      <Filter>core\utility</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="includes\GLFW\glfw3.h">
+      <Filter>incl_libs</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\GLFW\glfw3native.h">
+      <Filter>incl_libs</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\KHR\khrplatform.h">
+      <Filter>incl_libs</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\assimp\Bitmap.h">
+      <Filter>incl_libs</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\glm\mat4x3.hpp">
+      <Filter>incl_libs</Filter>
+    </ClInclude>
+    <ClInclude Include="core\graphical\Mesh.h">
+      <Filter>core\graphical</Filter>
+    </ClInclude>
+    <ClInclude Include="core\shader\Shader.h">
+      <Filter>core\shader</Filter>
+    </ClInclude>
+    <ClInclude Include="core\shader\ShaderFileLoader.h">
+      <Filter>core\shader</Filter>
+    </ClInclude>
+    <ClInclude Include="core\application\Application.h">
+      <Filter>core\application</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utility\VariableTypes.h">
+      <Filter>core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utility\MathLibrary.h">
+      <Filter>core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="core\graphical\Camera.h">
+      <Filter>core\graphical</Filter>
+    </ClInclude>
+    <ClInclude Include="core\application\Scene.h">
+      <Filter>core\application</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utility\Controller.h">
+      <Filter>core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="core\graphical\Actor.h">
+      <Filter>core\graphical</Filter>
+    </ClInclude>
+    <ClInclude Include="core\graphical\Texture.h">
+      <Filter>core\graphical</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utility\ReadWriteFiles.h">
+      <Filter>core\utility</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="core\shader\Shader.fs">
+      <Filter>core\shader</Filter>
+    </None>
+    <None Include="core\shader\Shader.vs">
+      <Filter>core\shader</Filter>
+    </None>
+  </ItemGroup>
+</Project>
