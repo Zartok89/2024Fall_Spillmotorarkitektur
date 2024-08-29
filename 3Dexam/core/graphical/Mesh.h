@@ -14,6 +14,7 @@ enum MeshShape
 	TRIANGLE,
 	SQUARE,
 	CUBE,
+	SPHERE,
 	CUBECOLOR,
 	TERRAIN_FLAT,
 	TERRAIN_CURVED
@@ -83,6 +84,7 @@ public:
 	void SquareMesh();
 	void CubeMesh();
 	void CubeMeshColor();
+	void SphereMesh(float radius, int sectorCount, int stackCount);
 
 	/*
 	 * Mesh generations
@@ -91,6 +93,10 @@ public:
 	void GenerateMathCurveFunctions2(float resolution, float startX, float endX);
 	void GenerateFlatTerrain(float terrainWidth, float terrainDepth, int divisionsWidth, int divisionsDepth);
 	void GenerateCurvedTerrain(float planeWidth, float planeDepth, int divisionsWidth, int divisionsDepth);
+
+	/*
+	* Mesh Utility
+	*/
 
 	/*
 	 * Member Variables

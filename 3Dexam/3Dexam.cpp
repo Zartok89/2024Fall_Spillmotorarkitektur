@@ -1,7 +1,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <iostream>
 #include <memory>
-#include <memory>
 #include <stb/stb_image.h>
 
 #include "shader/Shader.h"
@@ -44,8 +43,8 @@ int main()
 	/*
 	 * Mathmathical test functions
 	 */
-	std::shared_ptr<LeastSquaresMethod> leastSPtr = std::make_shared<LeastSquaresMethod>();
-	LeastSquaresMethodExample(leastSPtr);
+	//std::shared_ptr<LeastSquaresMethod> leastSPtr = std::make_shared<LeastSquaresMethod>();
+	//LeastSquaresMethodExample(leastSPtr);
 
 	/*
 	 * Creating scene and loading in objects
@@ -57,7 +56,7 @@ int main()
 	 * Creating camera and controllers and constructing pointers
 	 */
 	applicationPtr->controllerPtr = std::make_shared<Controller>(window, applicationPtr->scenePtr->mShader, screenWidth, screenHeight);
-	applicationPtr->controllerPtr->cameraPtr = std::make_shared<Camera>(applicationPtr->scenePtr->mShader, glm::vec3{ 0.f, 20.f, 25.f }, -45.f, 8.f, 1.f, 45.f);
+	applicationPtr->controllerPtr->cameraPtr = std::make_shared<Camera>(applicationPtr->scenePtr->mShader, glm::vec3{ 50.f, 100.f, 150.f }, -50.f, 8.f, 1.f, 45.f);
 	applicationPtr->controllerPtr->scenePtr = applicationPtr->scenePtr;
 	applicationPtr->controllerPtr->cameraPtr->lastX = screenWidth / 2.0f;
 	applicationPtr->controllerPtr->cameraPtr->lastY = screenHeight / 2.0f;

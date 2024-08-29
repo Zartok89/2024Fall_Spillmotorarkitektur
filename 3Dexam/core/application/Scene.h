@@ -2,14 +2,19 @@
 #include <string>
 #include <unordered_map>
 #include <GLFW/glfw3.h>
+#include <iostream>
 
+#include "utility/RandomNumberGenerator.h"
 #include "graphical/Actor.h"
 #include "graphical/Mesh.h"
 #include "graphical/Texture.h"
 
+class memory;
+
 class Scene
 {
 public:
+
 	/*
 	 * Constructor of the Scene Class and rendering
 	 */
@@ -41,10 +46,14 @@ public:
 	Shader* mShader = new Shader("core/shader/Shader.vs", "core/shader/Shader.fs");
 	float mNpcSpeed{ 5.f };
 	double previousTime = glfwGetTime();
-	bool hasSetNewLine {false};
+	bool hasSetNewLine{ false };
+
 	// NPC Varibles
 	int currentVertexIndex;
 	bool movingForward;
 	float interpolateFactor;
 	float npcMovementSpeed;
+
+	// Pointers
+	std::unique_ptr<RandomNumberGenerator> RandomNumberGenerator;
 };

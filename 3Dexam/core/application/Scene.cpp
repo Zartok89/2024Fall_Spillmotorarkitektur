@@ -1,6 +1,5 @@
-#include "Scene.h"
-
 #include <memory>
+#include "Scene.h"
 
 Scene::Scene() = default;
 
@@ -56,6 +55,7 @@ void Scene::LoadMeshes()
 	mSceneMeshes["SquareMesh"] = std::make_shared<Mesh>(MeshShape::SQUARE, mShader);
 	mSceneMeshes["CubeMesh"] = std::make_shared<Mesh>(MeshShape::CUBE, mShader);
 	mSceneMeshes["CubeMeshColor"] = std::make_shared<Mesh>(MeshShape::CUBECOLOR, mShader);
+	mSceneMeshes["SphereMesh"] = std::make_shared<Mesh>(MeshShape::SPHERE, mShader);
 	mSceneMeshes["FlatTerrainMesh"] = std::make_shared<Mesh>(MeshShape::TERRAIN_FLAT, mShader);
 	mSceneMeshes["CurvedTerrainMesh"] = std::make_shared<Mesh>(MeshShape::TERRAIN_CURVED, mShader);
 }
@@ -63,32 +63,41 @@ void Scene::LoadMeshes()
 // Actor loading, adding them into a vector of actors
 void Scene::LoadActors()
 {
-	/*
-	 * Scene 2D shapes
-	 */
-	 //mSceneActors["Triangle"] = (std::make_shared<Actor>("TriangleMesh", glm::vec3{ 0.f, 3.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 90.f, 1.f, Actor::ActorType::STATIC, mShader, "BlueTexture"));
-	mSceneActors["Square"] = (std::make_shared<Actor>("SquareMesh", mSceneMeshes["SquareMesh"], glm::vec3{ 0.f, 0.f, -20.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 50.f, Actor::ActorType::STATIC, mShader, "SkyTexture"));
+	int AmountOfBalls = 1000;
 
-	/*
-	 * Scene objects
-	 */
-	mSceneActors["NPCLineFollow"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ 4.f, 0.f, -0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 0.5f, Actor::ActorType::NPC_FOLLOWLINE, mShader));
-	mSceneActors["NPCCurveFollow"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 6.f, 0.f, -0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 0.5f, Actor::ActorType::NPC_FOLLOWCURVE, mShader, "BlueTexture"));
-	mSceneActors["StaticCube"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader, "BlueTexture"));
-	mSceneActors["PlayerCube"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ -4.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::PLAYER, mShader));
-	mSceneActors["NPCCube"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, -3.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::NPC, mShader, "BlueTexture"));
+	glm::vec3 TempVec = glm::vec3{ 0.f, 0.f, 0.f };
+	for (int i = 0; i <= AmountOfBalls; i++)
+	{
+		mSceneActors["SphereObject " + std::to_string(i)] = (std::make_shared<Actor>("SphereMesh", mSceneMeshes["SphereMesh"], TempVec, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 0.1f, Actor::ActorType::STATIC, mShader, "BlueTexture"));
+		TempVec = RandomNumberGenerator->GeneratorRandomVector(0, 100);
+	}
 
-	/*
-	 * Scene terrain
-	 */
-	//mSceneActors["Terrain"] = (std::make_shared<Actor>("FlatTerrainMesh", glm::vec3{ 0.f , -0.55f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader));
-	mSceneActors["Terrain"] = (std::make_shared<Actor>("CurvedTerrainMesh", mSceneMeshes["CurvedTerrainMesh"], glm::vec3{ 0.f , -0.55f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
+	///*
+	// * Scene 2D shapes
+	// */
+	// //mSceneActors["Triangle"] = (std::make_shared<Actor>("TriangleMesh", glm::vec3{ 0.f, 3.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 90.f, 1.f, Actor::ActorType::STATIC, mShader, "BlueTexture"));
+	//mSceneActors["Square"] = (std::make_shared<Actor>("SquareMesh", mSceneMeshes["SquareMesh"], glm::vec3{ 0.f, 0.f, -20.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 50.f, Actor::ActorType::STATIC, mShader, "SkyTexture"));
 
-	/*
-	 * Scene math functions
-	 */
-	mSceneActors["LineTest"] = (std::make_shared<Actor>("LineMesh", mSceneMeshes["LineMesh"], glm::vec3{ -10.f, -1.f, -5.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader));
-	mSceneActors["LineCurve"] = (std::make_shared<Actor>("LineCurvedMesh", mSceneMeshes["LineCurvedMesh"], glm::vec3{ 10.f, -1.f, -5.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::CURVETOFOLLOW, mShader));
+	///*
+	// * Scene objects
+	// */
+	//mSceneActors["NPCLineFollow"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ 4.f, 0.f, -0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 0.5f, Actor::ActorType::NPC_FOLLOWLINE, mShader));
+	//mSceneActors["NPCCurveFollow"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 6.f, 0.f, -0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 0.5f, Actor::ActorType::NPC_FOLLOWCURVE, mShader, "BlueTexture"));
+	//mSceneActors["StaticCube"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader, "BlueTexture"));
+	//mSceneActors["PlayerCube"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ -4.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::PLAYER, mShader));
+	//mSceneActors["NPCCube"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, -3.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::NPC, mShader, "BlueTexture"));
+
+	///*
+	// * Scene terrain
+	// */
+	////mSceneActors["Terrain"] = (std::make_shared<Actor>("FlatTerrainMesh", glm::vec3{ 0.f , -0.55f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader));
+	//mSceneActors["Terrain"] = (std::make_shared<Actor>("CurvedTerrainMesh", mSceneMeshes["CurvedTerrainMesh"], glm::vec3{ 0.f , -0.55f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
+
+	///*
+	// * Scene math functions
+	// */
+	//mSceneActors["LineTest"] = (std::make_shared<Actor>("LineMesh", mSceneMeshes["LineMesh"], glm::vec3{ -10.f, -1.f, -5.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader));
+	//mSceneActors["LineCurve"] = (std::make_shared<Actor>("LineCurvedMesh", mSceneMeshes["LineCurvedMesh"], glm::vec3{ 10.f, -1.f, -5.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::CURVETOFOLLOW, mShader));
 }
 
 void Scene::LoadVariables()
@@ -99,92 +108,87 @@ void Scene::LoadVariables()
 	npcMovementSpeed = 2.f;
 }
 
-void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std::shared_ptr<Actor>>::value_type& actors)
+void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std::shared_ptr<Actor>>::value_type& actorEntry) 
 {
-	// Running this logic if the actor type is Static
-	if (actors.second->mActorType == Actor::STATIC)
-	{
-		glm::mat4 actorTransform = actors.second->GetActorTransform();
-		mShader->setMat4("model", actorTransform);
-	}
+	auto& actor = actorEntry.second;
+	glm::mat4 transform;
 
-	// Running this logic if the actor type is NPC
-	if (actors.second->mActorType == Actor::NPC)
-	{
-		actors.second->mActorPosition.x += mNpcSpeed * deltaTime;
+	switch (actor->mActorType) {
+	case Actor::STATIC:
+		transform = actor->GetActorTransform();
+		mShader->setMat4("model", transform);
+		break;
 
-		if (actors.second->mActorPosition.x >= 5)
+	case Actor::NPC:
+		actor->mActorPosition.x += mNpcSpeed * deltaTime;
+		if (actor->mActorPosition.x >= 5 || actor->mActorPosition.x <= -5) 
 		{
 			mNpcSpeed *= -1.f;
 		}
-		if (actors.second->mActorPosition.x <= -5)
+		actor->SetActorPosition(actor->mActorPosition);
+		break;
+
+	case Actor::CURVETOFOLLOW:
+		transform = actor->GetActorTransform();
+		mShader->setMat4("model", transform);
+		break;
+
+	case Actor::NPC_FOLLOWCURVE:
+		if (!NpcFollowCurve(deltaTime, actor, "LineCurvedMesh", "LineCurve")) 
 		{
-			mNpcSpeed *= -1.f;
+			// Handle non-follow case if necessary
 		}
+		break;
 
-		actors.second->SetActorPosition({ actors.second->mActorPosition.x, actors.second->mActorPosition.y, actors.second->mActorPosition.z });
-	}
+	case Actor::NPC_FOLLOWLINE:
+		if (!NpcFollowCurve(deltaTime, actor, "LineMesh", "LineTest")) 
+		{
+			// Handle non-follow case if necessary
+		}
+		break;
 
-	// Running this logic if the actor type is a curve to be followed by NPC
-	if (actors.second->mActorType == Actor::CURVETOFOLLOW)
-	{
-		//glm::vec3 curveHeight;
-		//if (BarycentricCalculations(mSceneActors["Terrain"], actors.second->mActorPosition, curveHeight))
-		//	actors.second->SetActorPosition(curveHeight);
-		glm::mat4 lineActorTransform = actors.second->GetActorTransform();
-		mShader->setMat4("model", lineActorTransform);
-	}
-
-	// Running this logic if the actor type is an NPC that is to follow the curve
-	if (actors.second->mActorType == Actor::NPC_FOLLOWCURVE)
-	{
-		if (NpcFollowCurve(deltaTime, actors.second, "LineCurvedMesh", "LineCurve")) return;
-	}
-
-	// Running this logic if the actor type is an NPC that is to follow the curve
-	if (actors.second->mActorType == Actor::NPC_FOLLOWLINE)
-	{
-		if (NpcFollowCurve(deltaTime, actors.second, "LineMesh", "LineTest")) return;
-	}
-
-	// Running this logic if the actor type is a Player
-	if (actors.second->mActorType == Actor::PLAYER)
-	{
+	case Actor::PLAYER:
 		glm::vec3 playerHeight;
-		if (BarycentricCalculations(mSceneActors["Terrain"], actors.second->mActorPosition, playerHeight))
-			actors.second->SetActorPosition(playerHeight);
-		glm::mat4 playerActorTransform = actors.second->GetActorTransform();
-		mShader->setMat4("model", playerActorTransform);
+		if (BarycentricCalculations(mSceneActors["Terrain"], actor->mActorPosition, playerHeight)) 
+		{
+			actor->SetActorPosition(playerHeight);
+		}
+		transform = actor->GetActorTransform();
+		mShader->setMat4("model", transform);
+		break;
+
+	default:
+		break;
 	}
 }
 
 bool Scene::BarycentricCalculations(std::shared_ptr<Actor>& objectToCheck, glm::vec3 targetedPos, glm::vec3& newPositionVector)
 {
-    glm::vec3 targetPosition = glm::vec3(targetedPos.x, targetedPos.z, 0);
-    for (int i = 0; i < objectToCheck->mMeshInfo->mIndices.size(); i+=3)
+	glm::vec3 targetPosition = glm::vec3(targetedPos.x, targetedPos.z, 0);
+	for (int i = 0; i < objectToCheck->mMeshInfo->mIndices.size(); i += 3)
 	{
-		unsigned int P1 {objectToCheck->mMeshInfo->mIndices[i]};
-		unsigned int P2 {objectToCheck->mMeshInfo->mIndices[i+1]};
-		unsigned int P3 {objectToCheck->mMeshInfo->mIndices[i+2]};
+		unsigned int P1{ objectToCheck->mMeshInfo->mIndices[i] };
+		unsigned int P2{ objectToCheck->mMeshInfo->mIndices[i + 1] };
+		unsigned int P3{ objectToCheck->mMeshInfo->mIndices[i + 2] };
 
-        glm::vec3 P = glm::vec3(objectToCheck->mMeshInfo->mVertices[P1].mPosition.x, objectToCheck->mMeshInfo->mVertices[P1].mPosition.z, 0.f);
-        glm::vec3 Q = glm::vec3(objectToCheck->mMeshInfo->mVertices[P2].mPosition.x, objectToCheck->mMeshInfo->mVertices[P2].mPosition.z, 0.f);
-        glm::vec3 R = glm::vec3(objectToCheck->mMeshInfo->mVertices[P3].mPosition.x, objectToCheck->mMeshInfo->mVertices[P3].mPosition.z, 0.f);
+		glm::vec3 P = glm::vec3(objectToCheck->mMeshInfo->mVertices[P1].mPosition.x, objectToCheck->mMeshInfo->mVertices[P1].mPosition.z, 0.f);
+		glm::vec3 Q = glm::vec3(objectToCheck->mMeshInfo->mVertices[P2].mPosition.x, objectToCheck->mMeshInfo->mVertices[P2].mPosition.z, 0.f);
+		glm::vec3 R = glm::vec3(objectToCheck->mMeshInfo->mVertices[P3].mPosition.x, objectToCheck->mMeshInfo->mVertices[P3].mPosition.z, 0.f);
 
-        float areal = glm::length(glm::cross(Q - P, R - P));
+		float areal = glm::length(glm::cross(Q - P, R - P));
 
-        float U = (glm::cross(Q - targetPosition, R - targetPosition).z) / areal;
-        float V = (glm::cross(R - targetPosition, P - targetPosition).z) / areal;
-        float W = (glm::cross(P - targetPosition, Q - targetPosition).z) / areal;
+		float U = (glm::cross(Q - targetPosition, R - targetPosition).z) / areal;
+		float V = (glm::cross(R - targetPosition, P - targetPosition).z) / areal;
+		float W = (glm::cross(P - targetPosition, Q - targetPosition).z) / areal;
 
-        if (U >= 0 && V >= 0 && W >= 0)
-        {
-            newPositionVector = U * objectToCheck->mMeshInfo->mVertices[P1].mPosition + V * objectToCheck->mMeshInfo->mVertices[P2].mPosition + W * objectToCheck->mMeshInfo->mVertices[P3].mPosition;
-            return true;
-        }
-    }
+		if (U >= 0 && V >= 0 && W >= 0)
+		{
+			newPositionVector = U * objectToCheck->mMeshInfo->mVertices[P1].mPosition + V * objectToCheck->mMeshInfo->mVertices[P2].mPosition + W * objectToCheck->mMeshInfo->mVertices[P3].mPosition;
+			return true;
+		}
+	}
 
-    return false;
+	return false;
 }
 
 bool Scene::NpcFollowCurve(float deltaTime, std::shared_ptr<Actor>& actors, std::string meshToFollow, std::string actorOffset)

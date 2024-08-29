@@ -44,4 +44,6 @@ public:
 	float mScreenWidth;
 	float mScreenHeight;
 	Shader* mShader;
+	float FarPlane{ 500.f };
+	float NearPlane{ 0.1f };
 };

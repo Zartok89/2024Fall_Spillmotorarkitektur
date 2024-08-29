@@ -105,6 +105,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)3Dexam\core;$(ProjectDir)../3Dexam/Dependency/includes;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -122,6 +123,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)3Dexam\core;</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -136,6 +138,7 @@
     <ClCompile Include="core\application\Application.cpp" />
     <ClCompile Include="core\graphical\Camera.cpp" />
     <ClCompile Include="core\utility\Controller.cpp" />
+    <ClCompile Include="core\utility\RandomNumberGenerator.cpp" />
     <ClCompile Include="core\utility\ReadWriteFiles.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="core\utility\MathLibrary.cpp" />
@@ -163,6 +166,7 @@
     <ClInclude Include="core\shader\ShaderFileLoader.h" />
     <ClInclude Include="core\graphical\Texture.h" />
     <ClInclude Include="core\utility\VariableTypes.h" />
+    <ClInclude Include="core\utility\RandomNumberGenerator.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="core\shader\Shader.fs" />

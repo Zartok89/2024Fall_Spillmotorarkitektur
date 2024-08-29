@@ -11,7 +11,7 @@ Controller::Controller(GLFWwindow* window, Shader* shader, float screenWidth, fl
 	mScreenWidth = screenWidth;
 	mScreenHeight = screenHeight;
 	mShader = shader;
-	glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)mScreenWidth / (float)mScreenHeight, 0.1f, 100.0f);
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)mScreenWidth / (float)mScreenHeight, NearPlane, FarPlane);
 	mShader->setMat4("projection", projection);
 }
 
@@ -19,7 +19,7 @@ void Controller::CameraInputs(double dt)
 {
 	cameraPtr->updateCameraVectors();
 	cameraPtr->ProcessMouseScroll(0.1f);
-	mProjection = glm::perspective(glm::radians(45.0f), (float)mScreenWidth / (float)mScreenHeight, 0.1f, 100.0f);
+	mProjection = glm::perspective(glm::radians(45.0f), (float)mScreenWidth / (float)mScreenHeight, NearPlane, FarPlane);
 	mShader->setMat4("projection", mProjection);
 
 	if (glfwGetKey(mWindow, GLFW_KEY_W) == GLFW_PRESS)
@@ -60,7 +60,7 @@ void Controller::PlayerInputs(double dt)
 {
 	cameraPtr->updateCameraVectors();
 
-	mProjection = glm::perspective(glm::radians(45.0f), (float)mScreenWidth / (float)mScreenHeight, 0.1f, 100.0f);
+	mProjection = glm::perspective(glm::radians(45.0f), (float)mScreenWidth / (float)mScreenHeight, NearPlane, FarPlane);
 
 	mShader->setMat4("projection", mProjection);
 

@@ -1,43 +1,52 @@
 #include "Mesh.h"
 #include <glad/glad.h>
 
-Mesh::Mesh(MeshShape meshShape, Shader* meshShader)
-{
-	mMeshShape = meshShape;
-	mMeshShader = meshShader;
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
-	// Creating different type of meshes depending on what the actor in the scene is assigned
-	if (mMeshShape == MeshShape::LINE)
+Mesh::Mesh(MeshShape meshShape, Shader* meshShader) : mMeshShape(meshShape), mMeshShader(meshShader)
+{
+	switch (mMeshShape)
 	{
+	case MeshShape::LINE:
 		GenerateMathCurveFunctions(0.5f, -3, 4);
-	}
-	if (mMeshShape == MeshShape::LINECURVE)
-	{
+		break;
+
+	case MeshShape::LINECURVE:
 		GenerateMathCurveFunctions2(0.5f, -3, 4);
-	}
-	if (mMeshShape == MeshShape::TRIANGLE)
-	{
+		break;
+
+	case MeshShape::TRIANGLE:
 		TriangleMesh();
-	}
-	if (mMeshShape == MeshShape::SQUARE)
-	{
+		break;
+
+	case MeshShape::SQUARE:
 		SquareMesh();
-	}
-	if (mMeshShape == MeshShape::CUBE)
-	{
+		break;
+
+	case MeshShape::CUBE:
 		CubeMesh();
-	}
-	if (mMeshShape == MeshShape::CUBECOLOR)
-	{
+		break;
+
+	case MeshShape::CUBECOLOR:
 		CubeMeshColor();
-	}
-	if (mMeshShape == MeshShape::TERRAIN_FLAT)
-	{
+		break;
+
+	case MeshShape::SPHERE:
+		SphereMesh(5.f, 10, 10);
+		break;
+
+	case MeshShape::TERRAIN_FLAT:
 		GenerateFlatTerrain(mTerrainWidth, mTerrainDepth, mTerrainDivisionsWidth, mTerrainDivisionsDepth);
-	}
-	if (mMeshShape == MeshShape::TERRAIN_CURVED)
-	{
+		break;
+
+	case MeshShape::TERRAIN_CURVED:
 		GenerateCurvedTerrain(mTerrainWidth, mTerrainDepth, mTerrainDivisionsWidth, mTerrainDivisionsDepth);
+		break;
+
+	default:
+		throw std::invalid_argument("Unknown mesh shape");
 	}
 
 	MeshSetup();
@@ -212,6 +221,64 @@ void Mesh::CubeMeshColor()
 	};
 }
 
+void Mesh::SphereMesh(float radius, int sectorCount, int stackCount)
+{
+	float x, y, z, xy;                              // vertex position
+	float nx, ny, nz, lengthInv = 1.0f / radius;    // vertex normal
+	float s, t;                                     // vertex texCoord
+
+	float sectorStep = 2 * M_PI / sectorCount;
+	float stackStep = M_PI / stackCount;
+	float sectorAngle, stackAngle;
+
+	for (int i = 0; i <= stackCount; ++i) {
+		stackAngle = M_PI / 2 - i * stackStep;        // starting from pi/2 to -pi/2
+		xy = radius * cosf(stackAngle);             // r * cos(u)
+		z = radius * sinf(stackAngle);              // r * sin(u)
+
+		for (int j = 0; j <= sectorCount; ++j) {
+			sectorAngle = j * sectorStep;           // starting from 0 to 2pi
+
+			// vertex position (x, y, z)
+			x = xy * cosf(sectorAngle);             // r * cos(u) * cos(v)
+			y = xy * sinf(sectorAngle);             // r * cos(u) * sin(v)
+
+			// normalized vertex normal (nx, ny, nz)
+			nx = x * lengthInv;
+			ny = y * lengthInv;
+			nz = z * lengthInv;
+
+			// vertex tex coord (s, t) range between [0, 1]
+			s = (float)j / sectorCount;
+			t = (float)i / stackCount;
+
+			mVertices.emplace_back(Vertex({ x, y, z }, { nx, ny, nz }, { s, t }));
+		}
+	}
+
+	// generate CCW index list of sphere triangles
+	int k1, k2;
+	for (int i = 0; i < stackCount; ++i) {
+		k1 = i * (sectorCount + 1);     // beginning of current stack
+		k2 = k1 + sectorCount + 1;      // beginning of next stack
+
+		for (int j = 0; j < sectorCount; ++j, ++k1, ++k2) {
+			// 2 triangles per sector excluding first and last stacks
+			if (i != 0) {
+				mIndices.emplace_back(k1);
+				mIndices.emplace_back(k2);
+				mIndices.emplace_back(k1 + 1);
+			}
+
+			if (i != (stackCount - 1)) {
+				mIndices.emplace_back(k1 + 1);
+				mIndices.emplace_back(k2);
+				mIndices.emplace_back(k2 + 1);
+			}
+		}
+	}
+}
+
 void Mesh::GenerateMathCurveFunctions(float resolution, float startX, float endX)
 {
 	// ax^2+bx+c
@@ -239,11 +306,10 @@ void Mesh::GenerateMathCurveFunctions2(float resolution, float startX, float end
 		std::cout << "X: " << x << ", Y: " << pointValue << std::endl;
 		mVertices.emplace_back(x, 1.0f, pointValue);
 	}
-	for (float a = 0; a <= mVertices.size()/3; a ++)
+	for (float a = 0; a <= mVertices.size() / 3; a++)
 	{
 		mIndices.emplace_back(a);
 	}
-
 }
 
 void Mesh::GenerateFlatTerrain(float terrainWidth, float terrainDepth, int divisionsWidth, int divisionsDepth)
