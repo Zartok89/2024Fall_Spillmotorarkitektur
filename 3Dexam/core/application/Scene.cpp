@@ -227,7 +227,6 @@ void Scene::BallBouncingAround(float deltaTime, std::shared_ptr<Actor>& actor)
     actor->SetActorPosition(newPosition);
 }
 
-
 // Gammel eksamen-scene
 //void Scene::LoadActors()
 //{
