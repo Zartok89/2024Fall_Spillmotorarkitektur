@@ -21,6 +21,7 @@ glm::vec3 RandomNumberGenerator::GeneratorRandomVector(int MinValue, int MaxValu
 {
 	int N1 = GeneratorRandomNumber(MinValue, MaxValue);
 	int N2 = GeneratorRandomNumber(MinValue, MaxValue);
+	int N3 = GeneratorRandomNumber(MinValue, MaxValue);
 
-	return glm::vec3{ N1, 0.f, N2 };
+	return glm::vec3{ N1, N3, N2 };
 }

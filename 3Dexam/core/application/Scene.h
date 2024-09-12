@@ -44,10 +44,15 @@ public:
 	std::unordered_map<std::string, std::shared_ptr<Texture>> mSceneTextures;
 	std::unordered_map<std::string, std::shared_ptr<Mesh>> mSceneMeshes;
 	std::unordered_map<std::string, std::shared_ptr<Actor>> mSceneActors;
+	std::unordered_map<std::string, std::shared_ptr<Actor>> mSceneBallActors;
 	Shader* mShader = new Shader("core/shader/Shader.vs", "core/shader/Shader.fs");
 	float mNpcSpeed{ 5.f };
 	double previousTime = glfwGetTime();
 	bool hasSetNewLine{ false };
+
+	//CubeExtent
+	glm::vec3 MinCubeExtent;
+	glm::vec3 MaxCubeExtent;
 
 	// NPC Varibles
 	int currentVertexIndex;

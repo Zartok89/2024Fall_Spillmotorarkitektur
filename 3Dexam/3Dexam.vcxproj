@@ -154,6 +154,7 @@
     <ClInclude Include="core\application\Application.h" />
     <ClInclude Include="core\graphical\Camera.h" />
     <ClInclude Include="core\utility\Controller.h" />
+    <ClInclude Include="core\utility\ICollisionBounds.h" />
     <ClInclude Include="core\utility\MathLibrary.h" />
     <ClInclude Include="core\utility\ReadWriteFiles.h" />
     <ClInclude Include="includes\assimp\Bitmap.h" />

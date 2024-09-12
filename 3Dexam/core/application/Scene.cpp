@@ -1,8 +1,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
 
 #include <memory>
-#include <glm/glm.hpp>  
-#include <glm/gtx/compatibility.hpp> 
+#include <glm/glm.hpp>
+#include <glm/gtx/compatibility.hpp>
 #include "Scene.h"
 
 Scene::Scene() = default;
@@ -16,6 +16,22 @@ void Scene::RenderScene()
 	previousTime = currentTime;
 
 	for (auto& actors : mSceneActors)
+	{
+		// Checking if the actors is to be using texture or colors
+		if (actors.second->mUseTexture == true)
+		{
+			mSceneTextures[actors.second->mTexture]->BindTextures();
+		}
+		mShader->setBool("useTexture", actors.second->mUseTexture);
+
+		// Running the scene logic
+		ActorSceneLogic(deltaTime, actors);
+
+		// Rendering the meshes
+		mSceneMeshes[actors.second->mName]->RenderMesh();
+	}
+
+	for (auto& actors : mSceneBallActors)
 	{
 		// Checking if the actors is to be using texture or colors
 		if (actors.second->mUseTexture == true)
@@ -67,13 +83,19 @@ void Scene::LoadMeshes()
 // Actor loading, adding them into a vector of actors
 void Scene::LoadActors()
 {
-	int AmountOfBalls = 1000;
+	//MapBounds
+	mSceneActors["CubeContainer"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 50.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
+	auto& MapBounds = mSceneActors["CubeContainer"];
 
+	MinCubeExtent = MapBounds->mBoxExtendMin * MapBounds->GetActorScale();
+	MaxCubeExtent = MapBounds->mBoxExtendMax * MapBounds->GetActorScale();
+
+	int AmountOfBalls = 100;
 	glm::vec3 TempVec = glm::vec3{ 0.f, 0.f, 0.f };
 	for (int i = 0; i <= AmountOfBalls; i++)
 	{
-		mSceneActors["SphereObject " + std::to_string(i)] = (std::make_shared<Actor>("SphereMesh", mSceneMeshes["SphereMesh"], TempVec, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 0.1f, Actor::ActorType::BOUNCINGBALL, mShader, "BlueTexture"));
-		TempVec = RandomNumberGenerator->GeneratorRandomVector(0, 100);
+		mSceneBallActors["SphereObject " + std::to_string(i)] = (std::make_shared<Actor>("SphereMesh", mSceneMeshes["SphereMesh"], TempVec, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, .1f, Actor::ActorType::BOUNCINGBALL, mShader, "BlueTexture"));
+		TempVec = RandomNumberGenerator->GeneratorRandomVector(0, 25);
 	}
 }
 
@@ -217,14 +239,41 @@ bool Scene::NpcFollowCurve(float deltaTime, std::shared_ptr<Actor>& actors, std:
 
 void Scene::BallBouncingAround(float deltaTime, std::shared_ptr<Actor>& actor)
 {
-    glm::vec3 targetPosition = RandomNumberGenerator->GeneratorRandomVector(0, 100);  
-    glm::vec3 currentPosition = actor->GetActorPosition();  
+	for (auto& Ball : mSceneBallActors)
+	{
+		glm::vec3 TempPosition = actor->GetActorPosition();
 
-    float lerpFactor = 0.3f; 
+		if (!actor->mHasCollided)
+		{
+			TempPosition += actor->mActorSpeed * deltaTime;
+		}
+		else
+		{
+			TempPosition -= actor->mActorSpeed * deltaTime;
+		}
 
-    glm::vec3 newPosition = glm::lerp(currentPosition, targetPosition, lerpFactor * deltaTime);  
+		if (actor->GetActorPosition().x + actor->mBoxExtendMax.x * actor->GetActorScale() >= MaxCubeExtent.x)
+		{
+			actor->mHasCollided = true;
+		}
 
-    actor->SetActorPosition(newPosition);
+		if (actor->GetActorPosition().y + actor->mBoxExtendMax.y * actor->GetActorScale() >= MaxCubeExtent.y)
+		{
+			actor->mHasCollided = true;
+		}
+
+		if (actor->GetActorPosition().x - actor->mBoxExtendMax.x * actor->GetActorScale() <= MinCubeExtent.x)
+		{
+			actor->mHasCollided = false;
+		}
+
+		if (actor->GetActorPosition().y - actor->mBoxExtendMax.y * actor->GetActorScale() <= MinCubeExtent.y)
+		{
+			actor->mHasCollided = false;
+		}
+
+		actor->SetActorPosition(TempPosition);
+	}
 }
 
 // Gammel eksamen-scene

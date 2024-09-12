@@ -56,7 +56,7 @@ int main()
 	 * Creating camera and controllers and constructing pointers
 	 */
 	applicationPtr->controllerPtr = std::make_shared<Controller>(window, applicationPtr->scenePtr->mShader, screenWidth, screenHeight);
-	applicationPtr->controllerPtr->cameraPtr = std::make_shared<Camera>(applicationPtr->scenePtr->mShader, glm::vec3{ 50.f, 100.f, 150.f }, -50.f, 8.f, 1.f, 45.f);
+	applicationPtr->controllerPtr->cameraPtr = std::make_shared<Camera>(applicationPtr->scenePtr->mShader, glm::vec3{ -22.f, 22.f, 22.f }, -50.f, 8.f, 1.f, 45.f);
 	applicationPtr->controllerPtr->scenePtr = applicationPtr->scenePtr;
 	applicationPtr->controllerPtr->cameraPtr->lastX = screenWidth / 2.0f;
 	applicationPtr->controllerPtr->cameraPtr->lastY = screenHeight / 2.0f;

@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "utility/ICollisionBounds.h"
 #include "shader/Shader.h"
 #include "utility/VariableTypes.h"
 
@@ -97,6 +98,8 @@ public:
 	/*
 	* Mesh Utility
 	*/
+	std::pair<glm::vec3, glm::vec3> CalculateBoxExtent();
+	//std::pair<glm::vec3, glm::vec3> CalculateBoxExtent(std::vector<Vertex>& BoxVertVector);
 
 	/*
 	 * Member Variables

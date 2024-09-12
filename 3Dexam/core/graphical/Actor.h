@@ -4,6 +4,7 @@
 #include <glm/vec3.hpp>
 
 #include "Mesh.h"
+#include <utility/RandomNumberGenerator.h>
 
 class Actor
 {
@@ -33,12 +34,15 @@ public:
 	 */
 	glm::mat4 SetActorTransform(glm::vec3 position, float scale);
 	void SetActorPosition(glm::vec3 position);
+	void SetActorCollision();
+	void SetActorSpeed();
 
 	/*
 	 * Setting transforms of the actor
 	 */
 	glm::mat4 GetActorTransform() const { return mActorTransform; }
 	glm::vec3 GetActorPosition() const { return mActorPosition; }
+	float GetActorScale() const { return mActorScale; }
 
 	/*
 	 * Member Variables
@@ -54,4 +58,12 @@ public:
 	ActorType mActorType{ STATIC };
 	std::shared_ptr<Mesh> mMeshInfo;
 	Shader* mShader;
+	bool mHasCollided {false};
+	glm::vec3 mBoxExtendMin{0.f, 0.f, 0.f};
+	glm::vec3 mBoxExtendMax{0.f, 0.f, 0.f};
+	glm::vec3 mBoxExtendCenter{0.f, 0.f, 0.f};
+	glm::vec3 mActorSpeed{0.f, 0.f, 0.f};
+
+	// Pointers
+	std::unique_ptr<RandomNumberGenerator> RandomNumberGenerator;
 };

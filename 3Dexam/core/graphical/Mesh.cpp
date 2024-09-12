@@ -348,7 +348,6 @@ void Mesh::GenerateFlatTerrain(float terrainWidth, float terrainDepth, int divis
 		}
 	}
 }
-
 void Mesh::GenerateCurvedTerrain(float planeWidth, float planeDepth, int divisionsWidth, int divisionsDepth) {
 	int vertexCountWidth = divisionsWidth + 1;
 	int vertexCountDepth = divisionsDepth + 1;
@@ -392,3 +391,35 @@ void Mesh::GenerateCurvedTerrain(float planeWidth, float planeDepth, int divisio
 		}
 	}
 }
+
+std::pair<glm::vec3, glm::vec3> Mesh::CalculateBoxExtent()
+{
+	if (mVertices.empty()) { return std::pair<glm::vec3, glm::vec3>(); }
+
+	glm::vec3 minExtent = mVertices[0].mPosition;
+	glm::vec3 maxExtent = mVertices[0].mPosition;
+
+	for (const auto& vertex : mVertices)
+	{
+		minExtent = glm::min(minExtent, vertex.mPosition);
+		maxExtent = glm::max(maxExtent, vertex.mPosition);
+	}
+	std::pair<glm::vec3, glm::vec3> extentPair = std::make_pair(minExtent, maxExtent);
+	return extentPair;
+}
+
+//std::pair<glm::vec3, glm::vec3> Mesh::CalculateBoxExtent(std::vector<Vertex>& BoxVertVector)
+//{
+//	if (BoxVertVector.empty()) { return std::pair<glm::vec3, glm::vec3>(); }
+//
+//	glm::vec3 minExtent = BoxVertVector[0].mPosition;
+//	glm::vec3 maxExtent = BoxVertVector[0].mPosition;
+//
+//	for (const auto& vertex : BoxVertVector)
+//	{
+//		minExtent = glm::min(minExtent, vertex.mPosition);
+//		maxExtent = glm::max(maxExtent, vertex.mPosition);
+//	}
+//	std::pair<glm::vec3, glm::vec3> extentPair = std::make_pair(minExtent, maxExtent);
+//	return extentPair;
+//}

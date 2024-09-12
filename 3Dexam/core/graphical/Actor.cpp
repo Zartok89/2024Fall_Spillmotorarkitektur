@@ -6,6 +6,16 @@ Actor::Actor(const std::string& meshName, std::shared_ptr<Mesh> meshInfo, glm::v
 	ActorSetup(meshName, position, rotationAxis, rotation, scale, actorType, shader);
 	mUseTexture = false;
 	mMeshInfo = meshInfo;
+	mHasCollided = false;
+	mActorSpeed = { 0.f, 0.f, 0.f };
+	if (ActorType::BOUNCINGBALL || ActorType::STATIC)
+	{
+		SetActorCollision();
+	}
+	if (ActorType::BOUNCINGBALL)
+	{
+		SetActorSpeed();
+	}
 }
 
 // Constructor of an actor with textures
@@ -14,6 +24,16 @@ Actor::Actor(const std::string& meshName, std::shared_ptr<Mesh> meshInfo, glm::v
 	ActorSetup(meshName, position, rotationAxis, rotation, scale, actorType, shader, textureName);
 	mUseTexture = true;
 	mMeshInfo = meshInfo;
+	mActorSpeed = { 0.f, 0.f, 0.f };
+	mHasCollided = false;
+	if (ActorType::BOUNCINGBALL || ActorType::STATIC)
+	{
+		SetActorCollision();
+	}
+	if (ActorType::BOUNCINGBALL)
+	{
+		SetActorSpeed();
+	}
 }
 
 // Setting up actor information for the constructors
@@ -55,4 +75,21 @@ void Actor::SetActorPosition(glm::vec3 position)
 {
 	mActorPosition = position;
 	SetActorTransform(mActorPosition, mActorScale);
+}
+
+void Actor::SetActorCollision()
+{
+	std::pair<glm::vec3, glm::vec3> BoxExtendPair = mMeshInfo->CalculateBoxExtent();
+	mBoxExtendMin = BoxExtendPair.first;
+	mBoxExtendMax = BoxExtendPair.second;
+	mBoxExtendCenter = (mBoxExtendMin + mBoxExtendMax) / glm::vec3{ 2.f, 2.f, 2.f };
+}
+
+void Actor::SetActorSpeed()
+{
+	int R1 = RandomNumberGenerator->GeneratorRandomNumber(1, 100);
+	int R2 = RandomNumberGenerator->GeneratorRandomNumber(1, 100);
+	float Random1 = (R1 / 100.f);
+	float Random2 = (R2 / 100.f);
+	mActorSpeed = glm::vec3{ Random1, Random2, 0.f };
 }

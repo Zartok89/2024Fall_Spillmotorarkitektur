@@ -122,6 +122,9 @@
     <ClInclude Include="core\utility\RandomNumberGenerator.h">
       <Filter>core\utility</Filter>
     </ClInclude>
+    <ClInclude Include="core\utility\ICollisionBounds.h">
+      <Filter>incl_libs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="core\shader\Shader.fs">
