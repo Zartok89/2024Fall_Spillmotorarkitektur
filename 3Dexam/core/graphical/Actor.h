@@ -58,7 +58,7 @@ public:
 	ActorType mActorType{ STATIC };
 	std::shared_ptr<Mesh> mMeshInfo;
 	Shader* mShader;
-	bool mHasCollided {false};
+	bool mNegativeDirection {false};
 	glm::vec3 mBoxExtendMin{0.f, 0.f, 0.f};
 	glm::vec3 mBoxExtendMax{0.f, 0.f, 0.f};
 	glm::vec3 mBoxExtendCenter{0.f, 0.f, 0.f};

@@ -85,17 +85,17 @@ void Scene::LoadActors()
 {
 	//MapBounds
 	mSceneActors["CubeContainer"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 50.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
-	auto& MapBounds = mSceneActors["CubeContainer"];
+	auto& mapBounds = mSceneActors["CubeContainer"];
 
-	MinCubeExtent = MapBounds->mBoxExtendMin * MapBounds->GetActorScale();
-	MaxCubeExtent = MapBounds->mBoxExtendMax * MapBounds->GetActorScale();
+	minCubeExtent = mapBounds->mBoxExtendMin * mapBounds->GetActorScale();
+	maxCubeExtent = mapBounds->mBoxExtendMax * mapBounds->GetActorScale();
 
-	int AmountOfBalls = 100;
-	glm::vec3 TempVec = glm::vec3{ 0.f, 0.f, 0.f };
+	int AmountOfBalls = 500;
+	glm::vec3 tempVec = glm::vec3{ 0.f, 0.f, 0.f };
 	for (int i = 0; i <= AmountOfBalls; i++)
 	{
-		mSceneBallActors["SphereObject " + std::to_string(i)] = (std::make_shared<Actor>("SphereMesh", mSceneMeshes["SphereMesh"], TempVec, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, .1f, Actor::ActorType::BOUNCINGBALL, mShader, "BlueTexture"));
-		TempVec = RandomNumberGenerator->GeneratorRandomVector(0, 25);
+		mSceneBallActors["SphereObject " + std::to_string(i)] = (std::make_shared<Actor>("SphereMesh", mSceneMeshes["SphereMesh"], tempVec, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, .1f, Actor::ActorType::BOUNCINGBALL, mShader, "BlueTexture"));
+		tempVec = RandomNumberGenerator->GeneratorRandomVector(0, 25);
 	}
 }
 
@@ -239,41 +239,40 @@ bool Scene::NpcFollowCurve(float deltaTime, std::shared_ptr<Actor>& actors, std:
 
 void Scene::BallBouncingAround(float deltaTime, std::shared_ptr<Actor>& actor)
 {
-	for (auto& Ball : mSceneBallActors)
+	glm::vec3 position = actor->GetActorPosition();
+	glm::vec3 speed = actor->mActorSpeed;
+	float scale = actor->GetActorScale();
+	glm::vec3 boxExtendMax = actor->mBoxExtendMax;
+
+	glm::vec3 scaledBoxExtendMax = boxExtendMax * scale;
+
+	glm::vec3 positionChange;
+
+	if (actor->mNegativeDirection)
 	{
-		glm::vec3 TempPosition = actor->GetActorPosition();
-
-		if (!actor->mHasCollided)
-		{
-			TempPosition += actor->mActorSpeed * deltaTime;
-		}
-		else
-		{
-			TempPosition -= actor->mActorSpeed * deltaTime;
-		}
-
-		if (actor->GetActorPosition().x + actor->mBoxExtendMax.x * actor->GetActorScale() >= MaxCubeExtent.x)
-		{
-			actor->mHasCollided = true;
-		}
-
-		if (actor->GetActorPosition().y + actor->mBoxExtendMax.y * actor->GetActorScale() >= MaxCubeExtent.y)
-		{
-			actor->mHasCollided = true;
-		}
-
-		if (actor->GetActorPosition().x - actor->mBoxExtendMax.x * actor->GetActorScale() <= MinCubeExtent.x)
-		{
-			actor->mHasCollided = false;
-		}
-
-		if (actor->GetActorPosition().y - actor->mBoxExtendMax.y * actor->GetActorScale() <= MinCubeExtent.y)
-		{
-			actor->mHasCollided = false;
-		}
-
-		actor->SetActorPosition(TempPosition);
+		positionChange = -speed * deltaTime;
 	}
+	else
+	{
+		positionChange = speed * deltaTime;
+	}
+
+	position += positionChange;
+
+	bool hasCollided = actor->mNegativeDirection;
+
+	if (position.x + scaledBoxExtendMax.x >= maxCubeExtent.x || position.y + scaledBoxExtendMax.y >= maxCubeExtent.y || position.z + scaledBoxExtendMax.z >= maxCubeExtent.z)
+	{
+		hasCollided = true;
+	}
+
+	if (position.x - scaledBoxExtendMax.x <= minCubeExtent.x || position.y - scaledBoxExtendMax.y <= minCubeExtent.y || position.z - scaledBoxExtendMax.z <= minCubeExtent.z)
+	{
+		hasCollided = false;
+	}
+
+	actor->SetActorPosition(position);
+	actor->mNegativeDirection = hasCollided;
 }
 
 // Gammel eksamen-scene

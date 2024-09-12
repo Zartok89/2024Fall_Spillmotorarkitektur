@@ -51,8 +51,8 @@ public:
 	bool hasSetNewLine{ false };
 
 	//CubeExtent
-	glm::vec3 MinCubeExtent;
-	glm::vec3 MaxCubeExtent;
+	glm::vec3 minCubeExtent;
+	glm::vec3 maxCubeExtent;
 
 	// NPC Varibles
 	int currentVertexIndex;

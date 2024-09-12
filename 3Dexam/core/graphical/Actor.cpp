@@ -6,7 +6,7 @@ Actor::Actor(const std::string& meshName, std::shared_ptr<Mesh> meshInfo, glm::v
 	ActorSetup(meshName, position, rotationAxis, rotation, scale, actorType, shader);
 	mUseTexture = false;
 	mMeshInfo = meshInfo;
-	mHasCollided = false;
+	mNegativeDirection = false;
 	mActorSpeed = { 0.f, 0.f, 0.f };
 	if (ActorType::BOUNCINGBALL || ActorType::STATIC)
 	{
@@ -25,7 +25,7 @@ Actor::Actor(const std::string& meshName, std::shared_ptr<Mesh> meshInfo, glm::v
 	mUseTexture = true;
 	mMeshInfo = meshInfo;
 	mActorSpeed = { 0.f, 0.f, 0.f };
-	mHasCollided = false;
+	mNegativeDirection = false;
 	if (ActorType::BOUNCINGBALL || ActorType::STATIC)
 	{
 		SetActorCollision();
@@ -87,9 +87,12 @@ void Actor::SetActorCollision()
 
 void Actor::SetActorSpeed()
 {
+	float Divisor = 10.f;
 	int R1 = RandomNumberGenerator->GeneratorRandomNumber(1, 100);
 	int R2 = RandomNumberGenerator->GeneratorRandomNumber(1, 100);
-	float Random1 = (R1 / 100.f);
-	float Random2 = (R2 / 100.f);
-	mActorSpeed = glm::vec3{ Random1, Random2, 0.f };
+	int R3 = RandomNumberGenerator->GeneratorRandomNumber(1, 100);
+	float Random1 = (R1 / Divisor);
+	float Random2 = (R2 / Divisor);
+	float Random3 = (R3 / Divisor);
+	mActorSpeed = glm::vec3{ Random1, Random2, Random3 };
 }
