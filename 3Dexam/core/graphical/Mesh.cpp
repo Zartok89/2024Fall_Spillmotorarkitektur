@@ -408,6 +408,24 @@ std::pair<glm::vec3, glm::vec3> Mesh::CalculateBoxExtent()
 	return extentPair;
 }
 
+float Mesh::CalculateRadius()
+{
+	if (mVertices.empty()) { return 1.f; }
+
+	glm::vec3 minExtent = mVertices[0].mPosition;
+	glm::vec3 maxExtent = mVertices[0].mPosition;
+
+	for (const auto& vertex : mVertices)
+	{
+		minExtent = glm::min(minExtent, vertex.mPosition);
+		maxExtent = glm::max(maxExtent, vertex.mPosition);
+	}
+
+	float radius = (std::abs(maxExtent.x - minExtent.x) / 2);
+
+	return radius;
+}
+
 //std::pair<glm::vec3, glm::vec3> Mesh::CalculateBoxExtent(std::vector<Vertex>& BoxVertVector)
 //{
 //	if (BoxVertVector.empty()) { return std::pair<glm::vec3, glm::vec3>(); }

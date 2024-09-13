@@ -3,18 +3,19 @@
 // Constructor of an actor without textures
 Actor::Actor(const std::string& meshName, std::shared_ptr<Mesh> meshInfo, glm::vec3 position, glm::vec3 rotationAxis, float rotation, float scale, ActorType actorType, Shader* shader)
 {
-	ActorSetup(meshName, position, rotationAxis, rotation, scale, actorType, shader);
 	mUseTexture = false;
 	mMeshInfo = meshInfo;
-	mNegativeDirection = false;
-	mActorSpeed = { 0.f, 0.f, 0.f };
 	if (ActorType::BOUNCINGBALL || ActorType::STATIC)
 	{
 		SetActorCollision();
 	}
 	if (ActorType::BOUNCINGBALL)
 	{
-		SetActorSpeed();
+		BallActorSetup(meshName, position, rotationAxis, rotation, scale, actorType, shader);
+	}
+	else
+	{
+		ActorSetup(meshName, position, rotationAxis, rotation, scale, actorType, shader);
 	}
 }
 
@@ -24,15 +25,13 @@ Actor::Actor(const std::string& meshName, std::shared_ptr<Mesh> meshInfo, glm::v
 	ActorSetup(meshName, position, rotationAxis, rotation, scale, actorType, shader, textureName);
 	mUseTexture = true;
 	mMeshInfo = meshInfo;
-	mActorSpeed = { 0.f, 0.f, 0.f };
-	mNegativeDirection = false;
 	if (ActorType::BOUNCINGBALL || ActorType::STATIC)
 	{
 		SetActorCollision();
 	}
 	if (ActorType::BOUNCINGBALL)
 	{
-		SetActorSpeed();
+		SetRandomActorVelocity();
 	}
 }
 
@@ -48,6 +47,22 @@ void Actor::ActorSetup(const std::string& meshName, glm::vec3 position, glm::vec
 	mTexture = textureName;
 	mActorType = actorType;
 	ActorTransform();
+}
+
+void Actor::BallActorSetup(const std::string& meshName, glm::vec3 position, glm::vec3 rotationAxis, float rotation, float scale, ActorType actorType, Shader* shader, const std::string& textureName)
+{
+	mActorPosition = position;
+	mActorRotation = rotation;
+	mActorRotationAxis = rotationAxis;
+	mActorScale = scale;
+	mShader = shader;
+	mName = meshName;
+	mTexture = textureName;
+	mActorType = actorType;
+	mNegativeDirection = false;
+	mActorVelocity = { 0.f, 0.f, 0.f };
+	ActorTransform();
+	SetRandomActorVelocity();
 }
 
 // Setup of the transform of the actor
@@ -82,17 +97,28 @@ void Actor::SetActorCollision()
 	std::pair<glm::vec3, glm::vec3> BoxExtendPair = mMeshInfo->CalculateBoxExtent();
 	mBoxExtendMin = BoxExtendPair.first;
 	mBoxExtendMax = BoxExtendPair.second;
-	mBoxExtendCenter = (mBoxExtendMin + mBoxExtendMax) / glm::vec3{ 2.f, 2.f, 2.f };
+	mBoxExtendCenter = (glm::abs(mBoxExtendMin) + glm::abs(mBoxExtendMax)) / glm::vec3{ 2.f, 2.f, 2.f };
+	mActorRadius = mMeshInfo->CalculateRadius();
 }
 
-void Actor::SetActorSpeed()
+void Actor::SetRandomActorVelocity()
 {
-	float Divisor = 10.f;
+	float divisor = 10.f;
 	int R1 = RandomNumberGenerator->GeneratorRandomNumber(1, 100);
 	int R2 = RandomNumberGenerator->GeneratorRandomNumber(1, 100);
 	int R3 = RandomNumberGenerator->GeneratorRandomNumber(1, 100);
-	float Random1 = (R1 / Divisor);
-	float Random2 = (R2 / Divisor);
-	float Random3 = (R3 / Divisor);
-	mActorSpeed = glm::vec3{ Random1, Random2, Random3 };
+	float random1 = (R1 / divisor);
+	float random2 = (R2 / divisor);
+	float random3 = (R3 / divisor);
+
+    glm::vec3 randomDirection(random1, random2, random3);  
+    randomDirection = glm::normalize(randomDirection);  
+
+    float desiredSpeed = 5.0f;
+    mActorVelocity = randomDirection * desiredSpeed;  
+}
+
+void Actor::SetActorVelocity(glm::vec3 velocity)
+{
+	mActorVelocity = velocity;
 }

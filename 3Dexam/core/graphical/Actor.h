@@ -27,6 +27,7 @@ public:
 	Actor(const std::string& meshName, std::shared_ptr<Mesh> meshInfo, glm::vec3 position, glm::vec3 rotationAxis, float rotation, float scale, ActorType actorType, Shader* shader);
 	Actor(const std::string& meshName, std::shared_ptr<Mesh> meshInfo, glm::vec3 position, glm::vec3 rotationAxis, float rotation, float scale, ActorType actorType, Shader* shader, const std::string& textureName);
 	void ActorSetup(const std::string& meshName, glm::vec3 position, glm::vec3 rotationAxis, float rotation, float scale, ActorType actorType, Shader* shader, const std::string& textureName = "");
+	void BallActorSetup(const std::string& meshName, glm::vec3 position, glm::vec3 rotationAxis, float rotation, float scale, ActorType actorType, Shader* shader, const std::string& textureName = "");
 	void ActorTransform();
 
 	/*
@@ -35,7 +36,8 @@ public:
 	glm::mat4 SetActorTransform(glm::vec3 position, float scale);
 	void SetActorPosition(glm::vec3 position);
 	void SetActorCollision();
-	void SetActorSpeed();
+	void SetRandomActorVelocity();
+	void SetActorVelocity(glm::vec3 velocity);
 
 	/*
 	 * Setting transforms of the actor
@@ -43,6 +45,8 @@ public:
 	glm::mat4 GetActorTransform() const { return mActorTransform; }
 	glm::vec3 GetActorPosition() const { return mActorPosition; }
 	float GetActorScale() const { return mActorScale; }
+	glm::vec3 GetActorVelocity() const {return mActorVelocity; }
+	float GetActorRadius() const {return mActorRadius; }
 
 	/*
 	 * Member Variables
@@ -62,7 +66,9 @@ public:
 	glm::vec3 mBoxExtendMin{0.f, 0.f, 0.f};
 	glm::vec3 mBoxExtendMax{0.f, 0.f, 0.f};
 	glm::vec3 mBoxExtendCenter{0.f, 0.f, 0.f};
-	glm::vec3 mActorSpeed{0.f, 0.f, 0.f};
+	float mActorRadius{1.f};
+	glm::vec3 mActorVelocity{0.f, 0.f, 0.f};
+
 
 	// Pointers
 	std::unique_ptr<RandomNumberGenerator> RandomNumberGenerator;

@@ -15,6 +15,13 @@ class Scene
 {
 public:
 
+	enum BoxWallDirection
+	{
+		ZPOSITIVEWALL,
+		ZNEGATIVEWALL,
+	};
+
+
 	/*
 	 * Constructor of the Scene Class and rendering
 	 */
@@ -35,8 +42,11 @@ public:
 	 */
 	void ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std::shared_ptr<Actor>>::value_type& actors);
 	bool NpcFollowCurve(float deltaTime, std::shared_ptr<Actor>& actors, std::string meshToFollow, std::string actorOffset);
-	void BallBouncingAround(float deltaTime, std::shared_ptr<Actor>& actor);
+	void BoxAgainstBoxCollision(float deltaTime, std::shared_ptr<Actor>& actor);
+	void BallAgainstBoxCollision(float deltaTime, std::shared_ptr<Actor>& actor);
+	void BallAgainstBallCollision(float deltaTime, std::shared_ptr<Actor>& actor);
 	bool BarycentricCalculations(std::shared_ptr<Actor>& objectToCheck, glm::vec3 targetedPos, glm::vec3& newPositionVector);
+	glm::vec3 CalculateReflection(const glm::vec3& velocity, const glm::vec3& normal);
 
 	/*
 	 * Member variables and unordered maps
@@ -62,4 +72,23 @@ public:
 
 	// Pointers
 	std::unique_ptr<RandomNumberGenerator> RandomNumberGenerator;
+//	std::unique_ptr<MainOctTreeStruct> OctoTreeStructPtr;
+//
+//	//Test 
+//	std::unordered_map<std::string, std::vector<Actor&>> OctoTree;
+//	
+//	std::vector<Actor> MainOctVector;	
+//};
+//
+//struct MainOctTreeStruct
+//{
+//	std::vector<OctActorStruct&> OctActorStructVector;
+//
+//	void InitializeOctStruct(int AmountOfStructs, std::unordered_map<std::string, std::vector<Actor&>> OctActorStructRef);
+//
+//};
+//
+//struct OctActorStruct
+//{
+//	std::unordered_map<std::string, std::vector<Actor&>> OctActorVector
 };

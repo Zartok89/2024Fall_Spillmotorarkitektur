@@ -99,6 +99,7 @@ public:
 	* Mesh Utility
 	*/
 	std::pair<glm::vec3, glm::vec3> CalculateBoxExtent();
+	float CalculateRadius();
 	//std::pair<glm::vec3, glm::vec3> CalculateBoxExtent(std::vector<Vertex>& BoxVertVector);
 
 	/*

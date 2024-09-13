@@ -90,7 +90,7 @@ void Scene::LoadActors()
 	minCubeExtent = mapBounds->mBoxExtendMin * mapBounds->GetActorScale();
 	maxCubeExtent = mapBounds->mBoxExtendMax * mapBounds->GetActorScale();
 
-	int AmountOfBalls = 500;
+	int AmountOfBalls = 50;
 	glm::vec3 tempVec = glm::vec3{ 0.f, 0.f, 0.f };
 	for (int i = 0; i <= AmountOfBalls; i++)
 	{
@@ -116,6 +116,7 @@ void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std
 	case Actor::STATIC:
 		transform = actor->GetActorTransform();
 		mShader->setMat4("model", transform);
+		//BoxAgainstBoxCollision(deltaTime, actor);
 		break;
 
 	case Actor::NPC:
@@ -157,7 +158,8 @@ void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std
 		break;
 
 	case Actor::BOUNCINGBALL:
-		BallBouncingAround(deltaTime, actor);
+		BallAgainstBoxCollision(deltaTime, actor);
+		//BallAgainstBallCollision(deltaTime, actor);
 		break;
 
 	default:
@@ -192,6 +194,15 @@ bool Scene::BarycentricCalculations(std::shared_ptr<Actor>& objectToCheck, glm::
 	}
 
 	return false;
+}
+
+glm::vec3 Scene::CalculateReflection(const glm::vec3& velocity, const glm::vec3& normal)
+{
+	glm::vec3 normalizedNormal = glm::normalize(normal);
+
+	glm::vec3 reflection = velocity - 2.0f * glm::dot(velocity, normalizedNormal) * normalizedNormal;
+
+	return reflection;
 }
 
 bool Scene::NpcFollowCurve(float deltaTime, std::shared_ptr<Actor>& actors, std::string meshToFollow, std::string actorOffset)
@@ -237,10 +248,10 @@ bool Scene::NpcFollowCurve(float deltaTime, std::shared_ptr<Actor>& actors, std:
 	return false;
 }
 
-void Scene::BallBouncingAround(float deltaTime, std::shared_ptr<Actor>& actor)
+void Scene::BoxAgainstBoxCollision(float deltaTime, std::shared_ptr<Actor>& actor)
 {
 	glm::vec3 position = actor->GetActorPosition();
-	glm::vec3 speed = actor->mActorSpeed;
+	glm::vec3 speed = actor->mActorVelocity;
 	float scale = actor->GetActorScale();
 	glm::vec3 boxExtendMax = actor->mBoxExtendMax;
 
@@ -275,33 +286,99 @@ void Scene::BallBouncingAround(float deltaTime, std::shared_ptr<Actor>& actor)
 	actor->mNegativeDirection = hasCollided;
 }
 
-// Gammel eksamen-scene
-//void Scene::LoadActors()
+void Scene::BallAgainstBoxCollision(float deltaTime, std::shared_ptr<Actor>& actor)
+{
+	glm::vec3 position = actor->GetActorPosition();
+	glm::vec3 velocity = actor->GetActorVelocity();
+	float scale = actor->GetActorScale();
+	float radius = actor->GetActorRadius();
+
+	float scaledBallRadius = radius * scale;
+
+	glm::vec3 positionChange;
+
+	positionChange = velocity * deltaTime;
+
+	position += positionChange;
+
+	bool hasCollided = actor->mNegativeDirection;
+
+	switch (wallDirection)
+	{
+	default:
+		break;
+	}
+
+	if (position.x + scaledBallRadius >= maxCubeExtent.x || position.y + scaledBallRadius >= maxCubeExtent.y || position.z + scaledBallRadius >= maxCubeExtent.z)
+	{
+		glm::vec3 reflectionVelocity = CalculateReflection(velocity, { 0.0f, 1.0f, 0.0f });
+		actor->SetActorVelocity(reflectionVelocity);
+	}
+
+	if (position.x - scaledBallRadius <= minCubeExtent.x || position.y - scaledBallRadius <= minCubeExtent.y || position.z - scaledBallRadius <= minCubeExtent.z)
+	{
+		glm::vec3 reflectionVelocity = CalculateReflection(velocity, { 0.0f, 1.0f, 0.0f });
+		actor->SetActorVelocity(reflectionVelocity);
+	}
+
+
+
+	actor->SetActorPosition(position);
+}
+
+void Scene::BallAgainstBallCollision(float deltaTime, std::shared_ptr<Actor>& actor)
+{
+	glm::vec3 position = actor->GetActorPosition();
+	glm::vec3 speed = actor->mActorVelocity;
+	float scale = actor->GetActorScale();
+	float radius = actor->mActorRadius;
+
+	float scaledBallRadius = radius * scale;
+
+	glm::vec3 positionChange;
+
+	if (actor->mNegativeDirection)
+	{
+		positionChange = -speed * deltaTime;
+	}
+	else
+	{
+		positionChange = speed * deltaTime;
+	}
+
+	position += positionChange;
+
+	bool hasCollided = actor->mNegativeDirection;
+
+	for (auto& ball : mSceneBallActors)
+	{
+		glm::vec3 otherBallPosition = ball.second->GetActorPosition();
+		glm::vec3 otherBallspeed = actor->mActorVelocity;
+		float otherBallScaledBallRadius = ball.second->mActorRadius * ball.second->GetActorScale();
+
+		if (position.x + scaledBallRadius >= otherBallPosition.x - otherBallScaledBallRadius && position.x - otherBallScaledBallRadius <= otherBallPosition.x + otherBallScaledBallRadius)
+		{
+			hasCollided = true;
+		}
+		else
+		{
+			hasCollided = false;
+		}
+
+		//if (position.x - scaledBallRadius <= otherBallPosition.x + otherBallScaledBallRadius || position.y - scaledBallRadius <= otherBallPosition.y + otherBallScaledBallRadius || position.z - scaledBallRadius <= otherBallPosition.z + otherBallScaledBallRadius)
+		//{
+		//	hasCollided = false;
+		//}
+	}
+
+	actor->SetActorPosition(position);
+	actor->mNegativeDirection = hasCollided;
+}
+
+//void MainOctTreeStruct::InitializeOctStruct(int AmountOfStructs, std::unordered_map<std::string, std::vector<Actor&>> OctActorStructRef)
 //{
-//	/*
-//	 * Scene 2D shapes
-//	 */
-//	 //mSceneActors["Triangle"] = (std::make_shared<Actor>("TriangleMesh", glm::vec3{ 0.f, 3.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 90.f, 1.f, Actor::ActorType::STATIC, mShader, "BlueTexture"));
-//	mSceneActors["Square"] = (std::make_shared<Actor>("SquareMesh", mSceneMeshes["SquareMesh"], glm::vec3{ 0.f, 0.f, -20.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 50.f, Actor::ActorType::STATIC, mShader, "SkyTexture"));
-//
-//	/*
-//	 * Scene objects
-//	 */
-//	mSceneActors["NPCLineFollow"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ 4.f, 0.f, -0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 0.5f, Actor::ActorType::NPC_FOLLOWLINE, mShader));
-//	mSceneActors["NPCCurveFollow"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 6.f, 0.f, -0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 0.5f, Actor::ActorType::NPC_FOLLOWCURVE, mShader, "BlueTexture"));
-//	mSceneActors["StaticCube"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader, "BlueTexture"));
-//	mSceneActors["PlayerCube"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ -4.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::PLAYER, mShader));
-//	mSceneActors["NPCCube"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, -3.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::NPC, mShader, "BlueTexture"));
-//
-//	/*
-//	 * Scene terrain
-//	 */
-//	//mSceneActors["Terrain"] = (std::make_shared<Actor>("FlatTerrainMesh", glm::vec3{ 0.f , -0.55f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader));
-//	mSceneActors["Terrain"] = (std::make_shared<Actor>("CurvedTerrainMesh", mSceneMeshes["CurvedTerrainMesh"], glm::vec3{ 0.f , -0.55f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
-//
-//	/*
-//	 * Scene math functions
-//	 */
-//	mSceneActors["LineTest"] = (std::make_shared<Actor>("LineMesh", mSceneMeshes["LineMesh"], glm::vec3{ -10.f, -1.f, -5.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader));
-//	mSceneActors["LineCurve"] = (std::make_shared<Actor>("LineCurvedMesh", mSceneMeshes["LineCurvedMesh"], glm::vec3{ 10.f, -1.f, -5.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::CURVETOFOLLOW, mShader));
+//	for (int i = 0; i <= AmountOfStructs; i++)
+//	{
+//		OctActorStructVector.emplace_back(OctActorStructRef["OctActor" + std::to_string(i)]);
+//	}
 //}
