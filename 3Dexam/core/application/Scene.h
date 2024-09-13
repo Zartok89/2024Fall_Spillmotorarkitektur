@@ -15,13 +15,6 @@ class Scene
 {
 public:
 
-	enum BoxWallDirection
-	{
-		ZPOSITIVEWALL,
-		ZNEGATIVEWALL,
-	};
-
-
 	/*
 	 * Constructor of the Scene Class and rendering
 	 */
@@ -72,23 +65,23 @@ public:
 
 	// Pointers
 	std::unique_ptr<RandomNumberGenerator> RandomNumberGenerator;
-//	std::unique_ptr<MainOctTreeStruct> OctoTreeStructPtr;
-//
-//	//Test 
-//	std::unordered_map<std::string, std::vector<Actor&>> OctoTree;
-//	
-//	std::vector<Actor> MainOctVector;	
-//};
-//
-//struct MainOctTreeStruct
-//{
-//	std::vector<OctActorStruct&> OctActorStructVector;
-//
-//	void InitializeOctStruct(int AmountOfStructs, std::unordered_map<std::string, std::vector<Actor&>> OctActorStructRef);
-//
-//};
-//
-//struct OctActorStruct
-//{
-//	std::unordered_map<std::string, std::vector<Actor&>> OctActorVector
+	//	std::unique_ptr<MainOctTreeStruct> OctoTreeStructPtr;
+	//
+	//	//Test
+	//	std::unordered_map<std::string, std::vector<Actor&>> OctoTree;
+	//
+	//	std::vector<Actor> MainOctVector;
+	//};
+	//
+	//struct MainOctTreeStruct
+	//{
+	//	std::vector<OctActorStruct&> OctActorStructVector;
+	//
+	//	void InitializeOctStruct(int AmountOfStructs, std::unordered_map<std::string, std::vector<Actor&>> OctActorStructRef);
+	//
+	//};
+	//
+	//struct OctActorStruct
+	//{
+	//	std::unordered_map<std::string, std::vector<Actor&>> OctActorVector
 };
