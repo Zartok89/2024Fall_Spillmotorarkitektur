@@ -61,6 +61,7 @@ void Actor::BallActorSetup(const std::string& meshName, glm::vec3 position, glm:
 	mActorType = actorType;
 	mNegativeDirection = false;
 	mActorVelocity = { 0.f, 0.f, 0.f };
+	mActorMass = 1.f;
 	ActorTransform();
 	SetRandomActorVelocity();
 }

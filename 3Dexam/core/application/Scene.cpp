@@ -90,7 +90,7 @@ void Scene::LoadActors()
 	minCubeExtent = mapBounds->mBoxExtendMin * mapBounds->GetActorScale();
 	maxCubeExtent = mapBounds->mBoxExtendMax * mapBounds->GetActorScale();
 
-	int AmountOfBalls = 2000;
+	int AmountOfBalls = 500;
 	glm::vec3 tempVec = glm::vec3{ 0.f, 0.f, 0.f };
 	for (int i = 0; i <= AmountOfBalls; i++)
 	{
@@ -159,7 +159,7 @@ void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std
 
 	case Actor::BOUNCINGBALL:
 		BallAgainstBoxCollision(deltaTime, actor);
-		//BallAgainstBallCollision(deltaTime, actor);
+		BallAgainstBallCollision(deltaTime, actor);
 		break;
 
 	default:
@@ -295,8 +295,8 @@ void Scene::BallAgainstBoxCollision(float deltaTime, std::shared_ptr<Actor>& act
 
 	float scaledBallRadius = radius * scale;
 
-    glm::vec3 positionChange = velocity * deltaTime;  
-    glm::vec3 newPosition = position + positionChange;  
+	glm::vec3 positionChange = velocity * deltaTime;
+	glm::vec3 newPosition = position + positionChange;
 
 	glm::vec3 minExtents = minCubeExtent;
 	glm::vec3 maxExtents = maxCubeExtent;
@@ -311,85 +311,114 @@ void Scene::BallAgainstBoxCollision(float deltaTime, std::shared_ptr<Actor>& act
 		glm::vec3(0.f,  0.f,  1.f)  // -Z face
 	};
 
-    for (int axis = 0; axis < 3; ++axis)  
-    {  
-        if (newPosition[axis] + scaledBallRadius > maxExtents[axis])  
-        {  
-            glm::vec3 wallNormal = wallNormals[2 * axis];  
-            velocity = CalculateReflection(velocity, wallNormal);  
-            newPosition[axis] = maxExtents[axis] - scaledBallRadius;  
-        }  
-        else if (newPosition[axis] - scaledBallRadius < minExtents[axis])  
-        {  
-            glm::vec3 wallNormal = wallNormals[2 * axis + 1];  
-            velocity = CalculateReflection(velocity, wallNormal);  
-            newPosition[axis] = minExtents[axis] + scaledBallRadius;  
-        }  
-    }  
+	for (int axis = 0; axis < 3; ++axis)
+	{
+		if (newPosition[axis] + scaledBallRadius > maxExtents[axis])
+		{
+			glm::vec3 wallNormal = wallNormals[2 * axis];
+			velocity = CalculateReflection(velocity, wallNormal);
+			newPosition[axis] = maxExtents[axis] - scaledBallRadius;
+		}
+		else if (newPosition[axis] - scaledBallRadius < minExtents[axis])
+		{
+			glm::vec3 wallNormal = wallNormals[2 * axis + 1];
+			velocity = CalculateReflection(velocity, wallNormal);
+			newPosition[axis] = minExtents[axis] + scaledBallRadius;
+		}
+	}
 
-    actor->SetActorVelocity(velocity);  
-    actor->SetActorPosition(newPosition);  
+	actor->SetActorVelocity(velocity);
+	actor->SetActorPosition(newPosition);
 }
 
 void Scene::BallAgainstBallCollision(float deltaTime, std::shared_ptr<Actor>& actor)
 {
-	//if (position.x + scaledBallRadius >= maxCubeExtent.x || position.y + scaledBallRadius >= maxCubeExtent.y || position.z + scaledBallRadius >= maxCubeExtent.z)
-//{
-//	glm::vec3 reflectionVelocity = CalculateReflection(velocity, { 0.0f, 1.0f, 0.0f });
-//	actor->SetActorVelocity(reflectionVelocity);
-//}
+	 // Retrieve the current ball's properties  
+    glm::vec3 position = actor->GetActorPosition();  
+    glm::vec3 velocity = actor->mActorVelocity;  
+    float scale = actor->GetActorScale();  
+    float radius = actor->GetActorRadius();  
 
-//if (position.x - scaledBallRadius <= minCubeExtent.x || position.y - scaledBallRadius <= minCubeExtent.y || position.z - scaledBallRadius <= minCubeExtent.z)
-//{
-//	glm::vec3 reflectionVelocity = CalculateReflection(velocity, { 0.0f, 1.0f, 0.0f });
-//	actor->SetActorVelocity(reflectionVelocity);
-//}
+    float scaledBallRadius = radius * scale;  
 
-	glm::vec3 position = actor->GetActorPosition();
-	glm::vec3 speed = actor->mActorVelocity;
-	float scale = actor->GetActorScale();
-	float radius = actor->mActorRadius;
+    // Calculate the new position based on velocity and deltaTime  
+    glm::vec3 positionChange = velocity * deltaTime;  
+    glm::vec3 newPosition = position + positionChange;  
 
-	float scaledBallRadius = radius * scale;
+    // Restitution coefficient (1 for elastic collision)  
+    float restitution = 1.0f;  
 
-	glm::vec3 positionChange;
+    bool hasCollided = false;  
 
-	if (actor->mNegativeDirection)
-	{
-		positionChange = -speed * deltaTime;
-	}
-	else
-	{
-		positionChange = speed * deltaTime;
-	}
+    // Iterate through all other balls in the scene  
+    for (auto& ballPair : mSceneBallActors)  
+    {  
+        std::shared_ptr<Actor> otherBall = ballPair.second;  
 
-	position += positionChange;
+        // Avoid checking collision with itself  
+        if (otherBall.get() == actor.get())  
+            continue;  
 
-	bool hasCollided = actor->mNegativeDirection;
+        glm::vec3 otherBallPosition = otherBall->GetActorPosition();  
+        glm::vec3 otherBallVelocity = otherBall->mActorVelocity;  
+        float otherBallScaledRadius = otherBall->mActorRadius * otherBall->GetActorScale();  
 
-	for (auto& ball : mSceneBallActors)
-	{
-		glm::vec3 otherBallPosition = ball.second->GetActorPosition();
-		glm::vec3 otherBallspeed = actor->mActorVelocity;
-		float otherBallScaledBallRadius = ball.second->mActorRadius * ball.second->GetActorScale();
+        // Calculate the vector between the two centers  
+        glm::vec3 delta = newPosition - otherBallPosition;  
+        float distance = glm::length(delta);  
+        float sumRadii = scaledBallRadius + otherBallScaledRadius;  
 
-		if (position.x + scaledBallRadius >= otherBallPosition.x - otherBallScaledBallRadius && position.x - otherBallScaledBallRadius <= otherBallPosition.x + otherBallScaledBallRadius)
-		{
-			hasCollided = true;
-		}
-		else
-		{
-			hasCollided = false;
-		}
+        // Check for collision  
+        if (distance < sumRadii)  
+        {  
+            hasCollided = true;  
 
-		//if (position.x - scaledBallRadius <= otherBallPosition.x + otherBallScaledBallRadius || position.y - scaledBallRadius <= otherBallPosition.y + otherBallScaledBallRadius || position.z - scaledBallRadius <= otherBallPosition.z + otherBallScaledBallRadius)
-		//{
-		//	hasCollided = false;
-		//}
-	}
+            // Normalize the delta vector to get the surface normal  
+            glm::vec3 surfaceNormal = glm::normalize(delta);  
 
-	actor->SetActorPosition(position);
-	actor->mNegativeDirection = hasCollided;
+            // Calculate relative velocity  
+            glm::vec3 relativeVelocity = velocity - otherBallVelocity;  
+
+            // Calculate velocity along the normal  
+            float velAlongNormal = glm::dot(relativeVelocity, surfaceNormal);  
+
+            // Do not resolve if velocities are separating  
+            if (velAlongNormal > 0)  
+                continue;  
+
+            // Calculate impulse scalar  
+            float massA = actor->GetActorMass();  
+            float massB = otherBall->GetActorMass();  
+            float impulseMagnitude = -(1.0f + restitution) * velAlongNormal / (1.0f/massA + 1.0f/massB);  
+            glm::vec3 impulse = impulseMagnitude * surfaceNormal;  
+
+            // Update velocities based on impulse  
+            velocity += (impulse / massA);  
+            otherBallVelocity -= (impulse / massB);  
+
+            // Apply the updated velocities  
+            actor->mActorVelocity = velocity;  
+            otherBall->SetActorVelocity(otherBallVelocity);  
+
+            // Positional correction to prevent sinking  
+            float penetration = sumRadii - distance;  
+            float correctionPercent = 0.5f; // Distribute correction equally  
+            glm::vec3 correction = (penetration / (massA + massB)) * correctionPercent * surfaceNormal;  
+
+            newPosition += correction * massB;  
+            glm::vec3 correctedOtherPosition = otherBallPosition - correction * massA;  
+
+            // Update positions  
+            actor->SetActorPosition(newPosition);  
+            otherBall->SetActorPosition(correctedOtherPosition);  
+        }  
+    }  
+
+    // Update the actor's position  
+    actor->SetActorPosition(newPosition);  
+
+    // Update collision flag (optional, based on your specific needs)  
+    actor->mNegativeDirection = hasCollided;  
 }
 
 //void MainOctTreeStruct::InitializeOctStruct(int AmountOfStructs, std::unordered_map<std::string, std::vector<Actor&>> OctActorStructRef)

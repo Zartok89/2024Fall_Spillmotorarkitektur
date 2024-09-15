@@ -46,8 +46,9 @@ public:
 	glm::mat4 GetActorTransform() const { return mActorTransform; }
 	glm::vec3 GetActorPosition() const { return mActorPosition; }
 	float GetActorScale() const { return mActorScale; }
-	glm::vec3 GetActorVelocity() const {return mActorVelocity; }
-	float GetActorRadius() const {return mActorRadius; }
+	glm::vec3 GetActorVelocity() const { return mActorVelocity; }
+	float GetActorRadius() const { return mActorRadius; }
+	float GetActorMass() const { return mActorMass; }
 
 	/*
 	 * Member Variables
@@ -63,14 +64,14 @@ public:
 	ActorType mActorType{ STATIC };
 	std::shared_ptr<Mesh> mMeshInfo;
 	Shader* mShader;
-	bool mNegativeDirection {false};
-	glm::vec3 mBoxExtendMin{0.f, 0.f, 0.f};
-	glm::vec3 mBoxExtendMax{0.f, 0.f, 0.f};
-	glm::vec3 mBoxExtendCenter{0.f, 0.f, 0.f};
-	float mActorRadius{1.f};
-	glm::vec3 mActorVelocity{0.f, 0.f, 0.f};
-	float mActorSpeed{15.f};
-
+	bool mNegativeDirection{ false };
+	glm::vec3 mBoxExtendMin{ 0.f, 0.f, 0.f };
+	glm::vec3 mBoxExtendMax{ 0.f, 0.f, 0.f };
+	glm::vec3 mBoxExtendCenter{ 0.f, 0.f, 0.f };
+	float mActorRadius{ 1.f };
+	glm::vec3 mActorVelocity{ 0.f, 0.f, 0.f };
+	float mActorSpeed{ 15.f };
+	float mActorMass{ 1.f };
 
 	// Pointers
 	std::unique_ptr<RandomNumberGenerator> RandomNumberGenerator;
