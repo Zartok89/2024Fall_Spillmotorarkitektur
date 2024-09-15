@@ -14,7 +14,7 @@ void Scene::RenderScene()
 	double currentTime = glfwGetTime();
 	float deltaTime = (float)(currentTime - previousTime);
 	previousTime = currentTime;
-
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	for (auto& actors : mSceneActors)
 	{
 		// Checking if the actors is to be using texture or colors
@@ -31,6 +31,7 @@ void Scene::RenderScene()
 		mSceneMeshes[actors.second->mName]->RenderMesh();
 	}
 
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	for (auto& actors : mSceneBallActors)
 	{
 		// Checking if the actors is to be using texture or colors
@@ -47,13 +48,14 @@ void Scene::RenderScene()
 		mSceneMeshes[actors.second->mName]->RenderMesh();
 	}
 	HandleSceneCollision(deltaTime);
-	
 }
 
 // Loading all the textures, meshes and actors to be ready for rendering
 // **running before the "while loop" of main()**
 void Scene::LoadScene()
 {
+	glLineWidth(10.f);
+
 	LoadTextures();
 	LoadMeshes();
 	LoadActors();
@@ -118,7 +120,6 @@ void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std
 	case Actor::STATIC:
 		transform = actor->GetActorTransform();
 		mShader->setMat4("model", transform);
-		//BoxAgainstBoxCollision(deltaTime, actor);
 		break;
 
 	case Actor::NPC:
