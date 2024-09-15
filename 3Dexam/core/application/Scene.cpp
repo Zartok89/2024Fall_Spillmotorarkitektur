@@ -123,11 +123,11 @@ void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std
 
 	case Actor::NPC:
 		actor->mActorPosition.x += mNpcSpeed * deltaTime;
-		if (actor->mActorPosition.x >= 5 || actor->mActorPosition.x <= -5)
+		if (actor->GetActorPosition().x >= 5 || actor->GetActorPosition().x <= -5)
 		{
 			mNpcSpeed *= -1.f;
 		}
-		actor->SetActorPosition(actor->mActorPosition);
+		actor->SetActorPosition(actor->GetActorPosition());
 		break;
 
 	case Actor::CURVETOFOLLOW:
@@ -149,7 +149,7 @@ void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std
 
 	case Actor::PLAYER:
 		glm::vec3 playerHeight;
-		if (BarycentricCalculations(mSceneActors["Terrain"], actor->mActorPosition, playerHeight))
+		if (BarycentricCalculations(mSceneActors["Terrain"], actor->GetActorPosition(), playerHeight))
 		{
 			actor->SetActorPosition(playerHeight);
 		}

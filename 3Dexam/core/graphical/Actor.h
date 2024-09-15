@@ -24,10 +24,7 @@ public:
 	/*
 	 * Actor Constructors and setup
 	 */
-	Actor(const std::string& meshName, std::shared_ptr<Mesh> meshInfo, glm::vec3 position, glm::vec3 rotationAxis, float rotation, float scale, ActorType actorType, Shader* shader);
 	Actor(const std::string& meshName, std::shared_ptr<Mesh> meshInfo, glm::vec3 position, glm::vec3 rotationAxis, float rotation, float scale, ActorType actorType, Shader* shader, const std::string& textureName);
-	void ActorSetup(const std::string& meshName, glm::vec3 position, glm::vec3 rotationAxis, float rotation, float scale, ActorType actorType, Shader* shader, const std::string& textureName = "");
-	void BallActorSetup(const std::string& meshName, glm::vec3 position, glm::vec3 rotationAxis, float rotation, float scale, ActorType actorType, Shader* shader, const std::string& textureName = "");
 	void ActorTransform();
 
 	/*
@@ -55,9 +52,6 @@ public:
 	 * Member Variables
 	 */
 	glm::vec3 mActorPosition{ 0.f };
-	float mActorRotation{ 30.f };
-	glm::vec3 mActorRotationAxis{ 1.f, 0.f, 0.f };
-	glm::mat4 mActorTransform{ 0.f };
 	float mActorScale{ 1.f };
 	std::string mName{ " " };
 	std::string mTexture{ " " };
@@ -78,6 +72,9 @@ private:
 	/*
 	 * Private Member Variables
 	 */
+	glm::vec3 mActorRotationAxis{ 1.f, 0.f, 0.f };
+	float mActorRotation{ 30.f };
+	glm::mat4 mActorTransform{ 0.f };
 	glm::vec3 mActorVelocity{ 0.f, 0.f, 0.f };
 	float mActorMass{ 1.f };
 	float mActorRadius{ 1.f };
