@@ -5,11 +5,11 @@ Actor::Actor(const std::string& meshName, std::shared_ptr<Mesh> meshInfo, glm::v
 {
 	mUseTexture = false;
 	mMeshInfo = meshInfo;
-	if (ActorType::BOUNCINGBALL || ActorType::STATIC)
+	if (ActorType::BALL || ActorType::STATIC)
 	{
 		SetActorCollision();
 	}
-	if (ActorType::BOUNCINGBALL)
+	if (ActorType::BALL)
 	{
 		BallActorSetup(meshName, position, rotationAxis, rotation, scale, actorType, shader);
 	}
@@ -25,11 +25,11 @@ Actor::Actor(const std::string& meshName, std::shared_ptr<Mesh> meshInfo, glm::v
 	ActorSetup(meshName, position, rotationAxis, rotation, scale, actorType, shader, textureName);
 	mUseTexture = true;
 	mMeshInfo = meshInfo;
-	if (ActorType::BOUNCINGBALL || ActorType::STATIC)
+	if (ActorType::BALL || ActorType::STATIC)
 	{
 		SetActorCollision();
 	}
-	if (ActorType::BOUNCINGBALL)
+	if (ActorType::BALL)
 	{
 		SetRandomActorVelocity();
 	}

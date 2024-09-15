@@ -13,6 +13,14 @@ class memory;
 
 class Scene
 {
+	struct CollisionInfo
+	{
+		std::shared_ptr<Actor> actorA;
+		std::shared_ptr<Actor> actorB;
+		glm::vec3 collisionNormal;
+		float penetrationDepth;
+	};
+
 public:
 
 	/*
@@ -34,12 +42,18 @@ public:
 	 * Scene logic
 	 */
 	void ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std::shared_ptr<Actor>>::value_type& actors);
-	bool NpcFollowCurve(float deltaTime, std::shared_ptr<Actor>& actors, std::string meshToFollow, std::string actorOffset);
+	// Collision logic //
+	void HandleSceneCollision(float deltaTime);
+	std::vector<CollisionInfo> DetectAllCollisions();
+	void ResolveCollision(const CollisionInfo& collision);
 	void BoxAgainstBoxCollision(float deltaTime, std::shared_ptr<Actor>& actor);
-	void BallAgainstBoxCollision(float deltaTime, std::shared_ptr<Actor>& actor);
-	void BallAgainstBallCollision(float deltaTime, std::shared_ptr<Actor>& actor);
+	// Pathing logic //
+	void UpdateBouncingBall(float deltaTime, std::shared_ptr<Actor>& actor);
+	bool NpcFollowCurve(float deltaTime, std::shared_ptr<Actor>& actors, std::string meshToFollow, std::string actorOffset);
 	bool BarycentricCalculations(std::shared_ptr<Actor>& objectToCheck, glm::vec3 targetedPos, glm::vec3& newPositionVector);
+	// Helper logic //
 	glm::vec3 CalculateReflection(const glm::vec3& velocity, const glm::vec3& normal);
+
 
 	/*
 	 * Member variables and unordered maps

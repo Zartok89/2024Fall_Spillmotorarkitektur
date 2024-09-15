@@ -18,7 +18,7 @@ public:
 		NPC_FOLLOWLINE,
 		CURVETOFOLLOW,
 		PLAYER,
-		BOUNCINGBALL
+		BALL
 	};
 
 	/*
