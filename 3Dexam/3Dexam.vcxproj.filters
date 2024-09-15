@@ -66,6 +66,9 @@
     <ClCompile Include="core\utility\RandomNumberGenerator.cpp">
       <Filter>core\utility</Filter>
     </ClCompile>
+    <ClCompile Include="core\utility\Octree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="includes\GLFW\glfw3.h">
@@ -125,6 +128,9 @@
     <ClInclude Include="core\utility\ICollisionBounds.h">
       <Filter>incl_libs</Filter>
     </ClInclude>
+    <ClInclude Include="core\utility\Octree.h">
+      <Filter>incl_libs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="core\shader\Shader.fs">
@@ -133,5 +139,7 @@
     <None Include="core\shader\Shader.vs">
       <Filter>core\shader</Filter>
     </None>
+    <None Include="core\shader\wireframe.vs" />
+    <None Include="core\shader\wireframe.fs" />
   </ItemGroup>
 </Project>

@@ -43,12 +43,12 @@ int main()
 	/*
 	 * Mathmathical test functions
 	 */
-	//std::shared_ptr<LeastSquaresMethod> leastSPtr = std::make_shared<LeastSquaresMethod>();
-	//LeastSquaresMethodExample(leastSPtr);
+	 //std::shared_ptr<LeastSquaresMethod> leastSPtr = std::make_shared<LeastSquaresMethod>();
+	 //LeastSquaresMethodExample(leastSPtr);
 
-	/*
-	 * Creating scene and loading in objects
-	 */
+	 /*
+	  * Creating scene and loading in objects
+	  */
 	applicationPtr->scenePtr = std::make_shared<Scene>();
 	applicationPtr->scenePtr->LoadScene();
 

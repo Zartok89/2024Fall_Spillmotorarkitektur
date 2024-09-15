@@ -70,9 +70,9 @@ void Actor::SetActorCollision()
 void Actor::SetRandomActorVelocity()
 {
 	float divisor = 10.f;
-	int R1 = RandomNumberGenerator->GeneratorRandomNumber(1, 100);
-	int R2 = RandomNumberGenerator->GeneratorRandomNumber(1, 100);
-	int R3 = RandomNumberGenerator->GeneratorRandomNumber(1, 100);
+	int R1 = RandomNumberGenerator->GeneratorRandomNumber(-100, 100);
+	int R2 = RandomNumberGenerator->GeneratorRandomNumber(-100, 100);
+	int R3 = RandomNumberGenerator->GeneratorRandomNumber(-100, 100);
 	float random1 = (R1 / divisor);
 	float random2 = (R2 / divisor);
 	float random3 = (R3 / divisor);

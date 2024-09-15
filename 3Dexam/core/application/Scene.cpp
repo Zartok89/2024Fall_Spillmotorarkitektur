@@ -87,12 +87,20 @@ void Scene::LoadMeshes()
 // Actor loading, adding them into a vector of actors
 void Scene::LoadActors()
 {
-	//MapBounds
+	// Map Bounds
 	mSceneActors["CubeContainer"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 50.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
 	auto& mapBounds = mSceneActors["CubeContainer"];
 
 	minCubeExtent = mapBounds->mBoxExtendMin * mapBounds->GetActorScale();
 	maxCubeExtent = mapBounds->mBoxExtendMax * mapBounds->GetActorScale();
+
+	// Calculate center and half-dimensions for the octree boundary
+	glm::vec3 center = (minCubeExtent + maxCubeExtent) * 0.5f;
+	glm::vec3 halfDimension = (maxCubeExtent - minCubeExtent) * 0.5f;
+
+	// Generate Octree
+	AABB sceneBoundary{ center, halfDimension };
+	OctreePtr = std::make_unique<OctreeNode>(sceneBoundary, octreeCapacity);
 
 	int AmountOfBalls = 500;
 	glm::vec3 tempVec = glm::vec3{ 0.f, 0.f, 0.f };
@@ -100,6 +108,7 @@ void Scene::LoadActors()
 	{
 		mSceneBallActors["SphereObject " + std::to_string(i)] = (std::make_shared<Actor>("SphereMesh", mSceneMeshes["SphereMesh"], tempVec, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, .2f, Actor::ActorType::BALL, mShader, "BlueTexture"));
 		tempVec = RandomNumberGenerator->GeneratorRandomVector(0, 25);
+		OctreePtr->Insert(mSceneBallActors["SphereObject " + std::to_string(i)]);
 	}
 }
 
@@ -159,7 +168,7 @@ void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std
 		break;
 
 	case Actor::BALL:
-		UpdateBouncingBall(deltaTime, actor);
+		UpdateBall(deltaTime, actor);
 		break;
 
 	default:
@@ -178,11 +187,29 @@ void Scene::HandleSceneCollision(float deltaTime)
 			ball->SetActorPosition(ball->GetActorPosition() + positionChange);
 		}
 
+		//PopulateOctree();
+
 		std::vector<CollisionInfo> collisions = DetectAllCollisions();
 
-		for (const auto& collision : collisions)
-		{
-			ResolveCollision(collision);
+		for (const auto& actorPair : mSceneActors) {
+			auto& actor = actorPair.second;
+			if (actor->mActorType != Actor::BALL && actor->mActorType != Actor::STATIC) continue;
+
+			// Define a query range based on actor's position and radius
+			AABB queryRange
+			{
+				actor->GetActorPosition(),
+				glm::vec3(actor->GetActorRadius())
+			};
+
+			std::vector<std::shared_ptr<Actor>> potentialColliders;
+
+			//OctreePtr->Query(queryRange, potentialColliders);
+
+			for (const auto& collision : collisions)
+			{
+				ResolveCollision(collision);
+			}
 		}
 	}
 }
@@ -370,7 +397,17 @@ glm::vec3 Scene::CalculateReflection(const glm::vec3& velocity, const glm::vec3&
 	return reflection;
 }
 
-void Scene::UpdateBouncingBall(float deltaTime, std::shared_ptr<Actor>& actor)
+void Scene::PopulateOctree()
+{
+	OctreePtr->Clear();
+	for (const auto& actorPair : mSceneBallActors)
+	{
+		auto& actor = actorPair.second;
+		OctreePtr->Insert(actor);
+	}
+}	
+
+void Scene::UpdateBall(float deltaTime, std::shared_ptr<Actor>& actor)
 {
 	glm::vec3 position = actor->GetActorPosition();
 	glm::vec3 velocity = actor->GetActorVelocity();

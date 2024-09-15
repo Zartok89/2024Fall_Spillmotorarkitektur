@@ -134,6 +134,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="core\utility\Octree.cpp" />
     <ClCompile Include="OpenGLFall2024.cpp" />
     <ClCompile Include="core\graphical\Actor.cpp" />
     <ClCompile Include="core\application\Application.cpp" />
@@ -156,6 +157,7 @@
     <ClInclude Include="core\utility\Controller.h" />
     <ClInclude Include="core\utility\ICollisionBounds.h" />
     <ClInclude Include="core\utility\MathLibrary.h" />
+    <ClInclude Include="core\utility\Octree.h" />
     <ClInclude Include="core\utility\ReadWriteFiles.h" />
     <ClInclude Include="includes\assimp\Bitmap.h" />
     <ClInclude Include="includes\GLFW\glfw3.h" />
@@ -173,6 +175,8 @@
   <ItemGroup>
     <None Include="core\shader\Shader.fs" />
     <None Include="core\shader\Shader.vs" />
+    <None Include="core\shader\wireframe.fs" />
+    <None Include="core\shader\wireframe.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

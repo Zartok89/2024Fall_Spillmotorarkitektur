@@ -8,6 +8,7 @@
 #include "graphical/Actor.h"
 #include "graphical/Mesh.h"
 #include "graphical/Texture.h"
+#include "utility/Octree.h"
 
 class memory;
 
@@ -48,7 +49,7 @@ public:
 	void ResolveCollision(const CollisionInfo& collision);
 	void BoxAgainstBoxCollision(float deltaTime, std::shared_ptr<Actor>& actor);
 	// Pathing logic //
-	void UpdateBouncingBall(float deltaTime, std::shared_ptr<Actor>& actor);
+	void UpdateBall(float deltaTime, std::shared_ptr<Actor>& actor);
 	bool NpcFollowCurve(float deltaTime, std::shared_ptr<Actor>& actors, std::string meshToFollow, std::string actorOffset);
 	bool BarycentricCalculations(std::shared_ptr<Actor>& objectToCheck, glm::vec3 targetedPos, glm::vec3& newPositionVector);
 	// Helper logic //
@@ -67,9 +68,11 @@ public:
 	double previousTime = glfwGetTime();
 	bool hasSetNewLine{ false };
 
-	//CubeExtent
+	// CubeExtent & Octree
+	void PopulateOctree();
 	glm::vec3 minCubeExtent;
 	glm::vec3 maxCubeExtent;
+	int octreeCapacity = 8;
 
 	// NPC Varibles
 	int currentVertexIndex;
@@ -79,23 +82,5 @@ public:
 
 	// Pointers
 	std::unique_ptr<RandomNumberGenerator> RandomNumberGenerator;
-	//	std::unique_ptr<MainOctTreeStruct> OctoTreeStructPtr;
-	//
-	//	//Test
-	//	std::unordered_map<std::string, std::vector<Actor&>> OctoTree;
-	//
-	//	std::vector<Actor> MainOctVector;
-	//};
-	//
-	//struct MainOctTreeStruct
-	//{
-	//	std::vector<OctActorStruct&> OctActorStructVector;
-	//
-	//	void InitializeOctStruct(int AmountOfStructs, std::unordered_map<std::string, std::vector<Actor&>> OctActorStructRef);
-	//
-	//};
-	//
-	//struct OctActorStruct
-	//{
-	//	std::unordered_map<std::string, std::vector<Actor&>> OctActorVector
+	std::unique_ptr<OctreeNode> OctreePtr;
 };
