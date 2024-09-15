@@ -37,8 +37,9 @@ public:
 	void SetActorPosition(glm::vec3 position);
 	void SetActorCollision();
 	void SetRandomActorVelocity();
-	void SetActorVelocity(glm::vec3 velocity);
+	void SetActorVelocity(glm::vec3 actorVelocity) { mActorVelocity = actorVelocity; };
 	void SetActorSpeed(float actorSpeed) { mActorSpeed = actorSpeed; }
+	void SetActorMass(float actorMass) { mActorMass = actorMass; }
 
 	/*
 	 * Setting transforms of the actor
@@ -68,11 +69,17 @@ public:
 	glm::vec3 mBoxExtendMin{ 0.f, 0.f, 0.f };
 	glm::vec3 mBoxExtendMax{ 0.f, 0.f, 0.f };
 	glm::vec3 mBoxExtendCenter{ 0.f, 0.f, 0.f };
-	float mActorRadius{ 1.f };
-	glm::vec3 mActorVelocity{ 0.f, 0.f, 0.f };
 	float mActorSpeed{ 15.f };
-	float mActorMass{ 1.f };
 
 	// Pointers
 	std::unique_ptr<RandomNumberGenerator> RandomNumberGenerator;
+
+private:
+	/*
+	 * Private Member Variables
+	 */
+	glm::vec3 mActorVelocity{ 0.f, 0.f, 0.f };
+	float mActorMass{ 1.f };
+	float mActorRadius{ 1.f };
+
 };

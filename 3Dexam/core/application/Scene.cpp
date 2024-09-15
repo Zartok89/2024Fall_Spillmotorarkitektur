@@ -431,7 +431,7 @@ bool Scene::NpcFollowCurve(float deltaTime, std::shared_ptr<Actor>& actors, std:
 void Scene::BoxAgainstBoxCollision(float deltaTime, std::shared_ptr<Actor>& actor)
 {
 	glm::vec3 position = actor->GetActorPosition();
-	glm::vec3 speed = actor->mActorVelocity;
+	glm::vec3 speed = actor->GetActorVelocity();
 	float scale = actor->GetActorScale();
 	glm::vec3 boxExtendMax = actor->mBoxExtendMax;
 
