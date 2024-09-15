@@ -90,7 +90,7 @@ void Scene::LoadActors()
 	minCubeExtent = mapBounds->mBoxExtendMin * mapBounds->GetActorScale();
 	maxCubeExtent = mapBounds->mBoxExtendMax * mapBounds->GetActorScale();
 
-	int AmountOfBalls = 50;
+	int AmountOfBalls = 2000;
 	glm::vec3 tempVec = glm::vec3{ 0.f, 0.f, 0.f };
 	for (int i = 0; i <= AmountOfBalls; i++)
 	{
@@ -288,60 +288,62 @@ void Scene::BoxAgainstBoxCollision(float deltaTime, std::shared_ptr<Actor>& acto
 
 void Scene::BallAgainstBoxCollision(float deltaTime, std::shared_ptr<Actor>& actor)
 {
-    glm::vec3 position = actor->GetActorPosition();  
-    glm::vec3 velocity = actor->GetActorVelocity();  
-    float scale = actor->GetActorScale();  
-    float radius = actor->GetActorRadius();  
+	glm::vec3 position = actor->GetActorPosition();
+	glm::vec3 velocity = actor->GetActorVelocity();
+	float scale = actor->GetActorScale();
+	float radius = actor->GetActorRadius();
 
-    float scaledBallRadius = radius * scale;  
+	float scaledBallRadius = radius * scale;
 
     glm::vec3 positionChange = velocity * deltaTime;  
-    position += positionChange;  
+    glm::vec3 newPosition = position + positionChange;  
 
-    if (position.x + scaledBallRadius >= maxCubeExtent.x) {  
-        glm::vec3 wallNormal = { -1.f, 0.f, 0.f };  
-        velocity = CalculateReflection(velocity, wallNormal);  
-    }  
-    if (position.x - scaledBallRadius <= minCubeExtent.x) {  
-        glm::vec3 wallNormal = { 1.f, 0.f, 0.f };  
-        velocity = CalculateReflection(velocity, wallNormal);  
-    }  
+	glm::vec3 minExtents = minCubeExtent;
+	glm::vec3 maxExtents = maxCubeExtent;
 
-    if (position.y + scaledBallRadius >= maxCubeExtent.y) {  
-        glm::vec3 wallNormal = { 0.f, -1.f, 0.f };  
-        velocity = CalculateReflection(velocity, wallNormal);  
-    }  
-    if (position.y - scaledBallRadius <= minCubeExtent.y) {  
-        glm::vec3 wallNormal = { 0.f, 1.f, 0.f };  
-        velocity = CalculateReflection(velocity, wallNormal);  
-    }  
+	glm::vec3 wallNormals[6] =
+	{
+		glm::vec3(-1.f,  0.f,  0.f), // +X face
+		glm::vec3(1.f,  0.f,  0.f), // -X face
+		glm::vec3(0.f, -1.f,  0.f), // +Y face
+		glm::vec3(0.f,  1.f,  0.f), // -Y face
+		glm::vec3(0.f,  0.f, -1.f), // +Z face
+		glm::vec3(0.f,  0.f,  1.f)  // -Z face
+	};
 
-    if (position.z + scaledBallRadius >= maxCubeExtent.z) {  
-        glm::vec3 wallNormal = { 0.f, 0.f, -1.f };  
-        velocity = CalculateReflection(velocity, wallNormal);  
-    }  
-    if (position.z - scaledBallRadius <= minCubeExtent.z) {  
-        glm::vec3 wallNormal = { 0.f, 0.f, 1.f };  
-        velocity = CalculateReflection(velocity, wallNormal);  
+    for (int axis = 0; axis < 3; ++axis)  
+    {  
+        if (newPosition[axis] + scaledBallRadius > maxExtents[axis])  
+        {  
+            glm::vec3 wallNormal = wallNormals[2 * axis];  
+            velocity = CalculateReflection(velocity, wallNormal);  
+            newPosition[axis] = maxExtents[axis] - scaledBallRadius;  
+        }  
+        else if (newPosition[axis] - scaledBallRadius < minExtents[axis])  
+        {  
+            glm::vec3 wallNormal = wallNormals[2 * axis + 1];  
+            velocity = CalculateReflection(velocity, wallNormal);  
+            newPosition[axis] = minExtents[axis] + scaledBallRadius;  
+        }  
     }  
 
     actor->SetActorVelocity(velocity);  
-    actor->SetActorPosition(position); 
+    actor->SetActorPosition(newPosition);  
 }
 
 void Scene::BallAgainstBallCollision(float deltaTime, std::shared_ptr<Actor>& actor)
 {
-		//if (position.x + scaledBallRadius >= maxCubeExtent.x || position.y + scaledBallRadius >= maxCubeExtent.y || position.z + scaledBallRadius >= maxCubeExtent.z)
-	//{
-	//	glm::vec3 reflectionVelocity = CalculateReflection(velocity, { 0.0f, 1.0f, 0.0f });
-	//	actor->SetActorVelocity(reflectionVelocity);
-	//}
+	//if (position.x + scaledBallRadius >= maxCubeExtent.x || position.y + scaledBallRadius >= maxCubeExtent.y || position.z + scaledBallRadius >= maxCubeExtent.z)
+//{
+//	glm::vec3 reflectionVelocity = CalculateReflection(velocity, { 0.0f, 1.0f, 0.0f });
+//	actor->SetActorVelocity(reflectionVelocity);
+//}
 
-	//if (position.x - scaledBallRadius <= minCubeExtent.x || position.y - scaledBallRadius <= minCubeExtent.y || position.z - scaledBallRadius <= minCubeExtent.z)
-	//{
-	//	glm::vec3 reflectionVelocity = CalculateReflection(velocity, { 0.0f, 1.0f, 0.0f });
-	//	actor->SetActorVelocity(reflectionVelocity);
-	//}
+//if (position.x - scaledBallRadius <= minCubeExtent.x || position.y - scaledBallRadius <= minCubeExtent.y || position.z - scaledBallRadius <= minCubeExtent.z)
+//{
+//	glm::vec3 reflectionVelocity = CalculateReflection(velocity, { 0.0f, 1.0f, 0.0f });
+//	actor->SetActorVelocity(reflectionVelocity);
+//}
 
 	glm::vec3 position = actor->GetActorPosition();
 	glm::vec3 speed = actor->mActorVelocity;

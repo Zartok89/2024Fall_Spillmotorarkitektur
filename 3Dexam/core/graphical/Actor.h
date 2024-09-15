@@ -38,6 +38,7 @@ public:
 	void SetActorCollision();
 	void SetRandomActorVelocity();
 	void SetActorVelocity(glm::vec3 velocity);
+	void SetActorSpeed(float actorSpeed) { mActorSpeed = actorSpeed; }
 
 	/*
 	 * Setting transforms of the actor
@@ -68,6 +69,7 @@ public:
 	glm::vec3 mBoxExtendCenter{0.f, 0.f, 0.f};
 	float mActorRadius{1.f};
 	glm::vec3 mActorVelocity{0.f, 0.f, 0.f};
+	float mActorSpeed{15.f};
 
 
 	// Pointers

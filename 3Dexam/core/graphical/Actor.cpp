@@ -114,8 +114,7 @@ void Actor::SetRandomActorVelocity()
     glm::vec3 randomDirection(random1, random2, random3);  
     randomDirection = glm::normalize(randomDirection);  
 
-    float desiredSpeed = 5.0f;
-    mActorVelocity = randomDirection * desiredSpeed;  
+    mActorVelocity = randomDirection * mActorSpeed;  
 }
 
 void Actor::SetActorVelocity(glm::vec3 velocity)
