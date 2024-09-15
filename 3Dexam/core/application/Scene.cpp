@@ -102,11 +102,11 @@ void Scene::LoadActors()
 	AABB sceneBoundary{ center, halfDimension };
 	OctreePtr = std::make_unique<OctreeNode>(sceneBoundary, octreeCapacity);
 
-	int AmountOfBalls = 500;
+	int AmountOfBalls = 100;
 	glm::vec3 tempVec = glm::vec3{ 0.f, 0.f, 0.f };
 	for (int i = 0; i <= AmountOfBalls; i++)
 	{
-		mSceneBallActors["SphereObject " + std::to_string(i)] = (std::make_shared<Actor>("SphereMesh", mSceneMeshes["SphereMesh"], tempVec, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, .2f, Actor::ActorType::BALL, mShader, "BlueTexture"));
+		mSceneBallActors["SphereObject " + std::to_string(i)] = (std::make_shared<Actor>("SphereMesh", mSceneMeshes["SphereMesh"], tempVec, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, .1f, Actor::ActorType::BALL, mShader, "BlueTexture"));
 		tempVec = RandomNumberGenerator->GeneratorRandomVector(0, 25);
 		OctreePtr->Insert(mSceneBallActors["SphereObject " + std::to_string(i)]);
 	}
