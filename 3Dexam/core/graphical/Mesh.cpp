@@ -45,6 +45,14 @@ Mesh::Mesh(MeshShape meshShape, Shader* meshShader) : mMeshShape(meshShape), mMe
 		GenerateCurvedTerrain(mTerrainWidth, mTerrainDepth, mTerrainDivisionsWidth, mTerrainDivisionsDepth);
 		break;
 
+	case MeshShape::BSPLINEBASIS:
+		DrawBSplineBasisFunction();
+		break;
+
+	case MeshShape::BSPLINEBIQUADRIC:
+		DrawBSplineBasisFunction();
+		break;
+
 	default:
 		throw std::invalid_argument("Unknown mesh shape");
 	}
@@ -58,7 +66,7 @@ void Mesh::RenderMesh()
 
 	// If the mesh is a line or a point, it will only use the vertices array, else draw with indices
 	glBindVertexArray(mVAO);
-	if (mMeshShape == MeshShape::LINE || mMeshShape == MeshShape::LINECURVE)
+	if (mMeshShape == MeshShape::LINE || mMeshShape == MeshShape::LINECURVE || mMeshShape == MeshShape::BSPLINEBASIS || mMeshShape == MeshShape::BSPLINEBIQUADRIC)
 	{
 		glLineWidth(8.f);
 		glDrawArrays(GL_LINE_STRIP, 0, mVertices.size());
@@ -388,6 +396,149 @@ void Mesh::GenerateCurvedTerrain(float planeWidth, float planeDepth, int divisio
 			mIndices.push_back(currentRowStart + width + 1);
 			mIndices.push_back(nextRowStart + width);
 			mIndices.push_back(nextRowStart + width + 1);
+		}
+	}
+}
+
+float Mesh::bSplineBasis(int i, float t, int degree)
+{
+	const std::vector<float> knots = { 0.0f,0.0f,0.0f,1.0f,1.0f,1.0f,2.0f,2.0f,2.0f,3.0f,3.0f,3.0f };
+
+	if (degree == 0) {
+		if (knots[i] <= t && t < knots[i + 1]) {
+			return 1.0f;
+		}
+		else {
+			return 0.0f;
+		}
+	}
+	else {
+		float coeff1 = 0.0f;
+		float coeff2 = 0.0f;
+
+		// Calculate the first coefficient
+		if (knots[i + degree] != knots[i]) {
+			coeff1 = (t - knots[i]) / (knots[i + degree] - knots[i]);
+		}
+
+		// Calculate the second coefficient
+		if (knots[i + degree + 1] != knots[i + 1])
+		{
+			coeff2 = (knots[i + degree + 1] - t) / (knots[i + degree + 1] - knots[i + 1]);
+		}
+
+		// Recursively calculate the basis functions return coeff1 * bSplineBasis(i, t, degree -1) + coeff2 * bSplineBasis(i +1, t, degree -1);
+	}
+
+	//const std::vector<float> knots = { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f };
+
+	//if (degree == 0) {
+	//	if (knots[i] <= t && t < knots[i + 1]) {
+	//		return 1.0f;
+	//	}
+	//	else {
+	//		return 0.0f;
+	//	}
+	//}
+	//else {
+	//	float coeff1 = 0.0f;
+	//	float coeff2 = 0.0f;
+
+	//	// Calculate the first coefficient
+	//	if (knots[i + degree] != knots[i]) {
+	//		coeff1 = (t - knots[i]) / (knots[i + degree] - knots[i]);
+	//	}
+
+	//	// Calculate the second coefficient
+	//	if (knots[i + degree + 1] != knots[i + 1]) {
+	//		coeff2 = (knots[i + degree + 1] - t) / (knots[i + degree + 1] - knots[i + 1]);
+	//	}
+
+	//	// Recursively calculate the basis functions
+	//	return coeff1 * bSplineBasis(i, t, degree - 1) + coeff2 * bSplineBasis(i + 1, t, degree - 1);
+	//}
+}
+
+float Mesh::bSplineBasisBiQuadratic(int i, int j, float u, float v)
+{
+	const int degree = 2;
+	return bSplineBasis(i, u, degree) * bSplineBasis(j, v, degree);
+}
+
+void Mesh::DrawBSplineBasisFunction()
+{
+	//std::vector<glm::vec3> controlPoints = {
+	//{0.0f,0.0f,0.0f}, // P00
+	//{1.0f,0.0f,0.0f}, // P01
+	//{2.0f,0.0f,0.0f}, // P02
+	//{0.0f,1.0f,1.0f}, // P10
+	//{1.0f,1.0f,2.0f}, // P11
+	//{2.0f,1.0f,1.0f}, // P12
+	//{0.0f,2.0f,0.0f}, // P20
+	//{1.0f,2.0f,0.0f}, // P21
+	//{2.0f,2.0f,0.0f} // P22
+	//};
+
+	std::vector<glm::vec3> controlPoints = {
+ {0.0f,0.0f,0.0f}, // P00
+		{1.0f,2.0f,0.0f}, // P01
+		{2.0f,0.0f,0.0f}, // P02
+		{0.0f,1.0f,1.0f}, // P10
+		{1.0f,3.0f,2.0f}, // P11
+		{2.0f,1.0f,1.0f}, // P12
+		{0.0f,0.0f,0.0f}, // P20
+		{1.0f,1.0f,0.0f}, // P21
+		{2.0f,0.0f,0.0f} // P22};
+	};
+
+	mVertices.clear();
+
+	// Draw B-Spline Basis Functions
+
+	if (MeshShape::BSPLINEBASIS)
+	{
+		for (float t = 0.0f; t <= 3.0f; t += 0.01f) // Adjust range based on knots
+		{
+			Vertex point = { 0.0f, 0.0f, 0.0f }; // Initialize point as a Vertex type // Sum the contributions from all control points
+			for (size_t i = 0; i < controlPoints.size(); ++i)
+			{
+				float basisValue = bSplineBasis(i, t, 2); // Degree2
+				point.mPosition.x += controlPoints[i].x * basisValue; // Weighted x position
+				point.mPosition.y += controlPoints[i].y * basisValue; // Weighted y position
+				point.mPosition.z += controlPoints[i].z * basisValue; // Weighted z position
+			}
+
+			mVertices.emplace_back(point); // Add point to the vertex list
+		}
+
+		//for (int i = 0; i < 3; ++i)
+		//{
+		//	for (float t = 0.0f; t <= 1.0f; t += 0.01f)
+		//	{
+		//		float value = bSplineBasis(i, t, 2);
+		//		float xPos = controlPoints[i].x * value; // X position
+		//		float zPos = controlPoints[i].z; // Z position should be constant for this basis function
+		//		mVertices.emplace_back(xPos, 0.0f, zPos); // Create vertex
+		//	}
+		//}
+	}
+
+	if (MeshShape::BSPLINEBIQUADRIC)
+	{
+		for (int i = 0; i < 3; ++i) // For basis functions in u direction
+		{
+			for (int j = 0; j < 3; ++j) // For basis functions in v direction
+			{
+				for (float u = 0.0f; u <= 1.0f; u += 0.01f)
+				{
+					for (float v = 0.0f; v <= 1.0f; v += 0.01f)
+					{
+						float value = bSplineBasisBiQuadratic(i, j, u, v); // Evaluate bi-quadratic basis function
+						glm::vec3 controlPoint = controlPoints[i + j * 3]; // Get the control point
+						mVertices.emplace_back(controlPoint.x * value, controlPoint.y * value, controlPoint.z * value); // Create vertex
+					}
+				}
+			}
 		}
 	}
 }

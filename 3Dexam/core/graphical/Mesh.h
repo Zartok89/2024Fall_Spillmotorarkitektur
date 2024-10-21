@@ -18,7 +18,9 @@ enum MeshShape
 	SPHERE,
 	CUBECOLOR,
 	TERRAIN_FLAT,
-	TERRAIN_CURVED
+	TERRAIN_CURVED,
+	BSPLINEBASIS,
+	BSPLINEBIQUADRIC
 };
 
 class Vertex
@@ -94,6 +96,13 @@ public:
 	void GenerateMathCurveFunctions2(float resolution, float startX, float endX);
 	void GenerateFlatTerrain(float terrainWidth, float terrainDepth, int divisionsWidth, int divisionsDepth);
 	void GenerateCurvedTerrain(float planeWidth, float planeDepth, int divisionsWidth, int divisionsDepth);
+
+	/*
+	 * BSplines
+	 */
+	float bSplineBasis(int i, float t, int degree);
+	float bSplineBasisBiQuadratic(int i, int j, float u, float v);
+	void DrawBSplineBasisFunction();
 
 	/*
 	* Mesh Utility

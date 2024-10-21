@@ -14,7 +14,7 @@ void Scene::RenderScene()
 	double currentTime = glfwGetTime();
 	float deltaTime = (float)(currentTime - previousTime);
 	previousTime = currentTime;
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	for (auto& actors : mSceneActors)
 	{
 		// Checking if the actors is to be using texture or colors
@@ -31,23 +31,23 @@ void Scene::RenderScene()
 		mSceneMeshes[actors.second->mName]->RenderMesh();
 	}
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	for (auto& actors : mSceneBallActors)
-	{
-		// Checking if the actors is to be using texture or colors
-		if (actors.second->mUseTexture == true)
-		{
-			mSceneTextures[actors.second->mTexture]->BindTextures();
-		}
-		mShader->setBool("useTexture", actors.second->mUseTexture);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	//for (auto& actors : mSceneBallActors)
+	//{
+	//	// Checking if the actors is to be using texture or colors
+	//	if (actors.second->mUseTexture == true)
+	//	{
+	//		mSceneTextures[actors.second->mTexture]->BindTextures();
+	//	}
+	//	mShader->setBool("useTexture", actors.second->mUseTexture);
 
-		// Running the scene logic
-		ActorSceneLogic(deltaTime, actors);
+	//	// Running the scene logic
+	//	ActorSceneLogic(deltaTime, actors);
 
-		// Rendering the meshes
-		mSceneMeshes[actors.second->mName]->RenderMesh();
-	}
-	HandleSceneCollision(deltaTime);
+	//	// Rendering the meshes
+	//	mSceneMeshes[actors.second->mName]->RenderMesh();
+	//}
+	//HandleSceneCollision(deltaTime);
 }
 
 // Loading all the textures, meshes and actors to be ready for rendering
@@ -82,34 +82,39 @@ void Scene::LoadMeshes()
 	mSceneMeshes["SphereMesh"] = std::make_shared<Mesh>(MeshShape::SPHERE, mShader);
 	mSceneMeshes["FlatTerrainMesh"] = std::make_shared<Mesh>(MeshShape::TERRAIN_FLAT, mShader);
 	mSceneMeshes["CurvedTerrainMesh"] = std::make_shared<Mesh>(MeshShape::TERRAIN_CURVED, mShader);
+	mSceneMeshes["bSplineBasisMesh"] = std::make_shared<Mesh>(MeshShape::BSPLINEBASIS, mShader);
+	mSceneMeshes["bSplineQuadricBasisMesh"] = std::make_shared<Mesh>(MeshShape::BSPLINEBIQUADRIC, mShader);
 }
 
 // Actor loading, adding them into a vector of actors
 void Scene::LoadActors()
 {
-	// Map Bounds
-	mSceneActors["CubeContainer"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 50.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
-	auto& mapBounds = mSceneActors["CubeContainer"];
+	mSceneActors["bSplineBasis"] = (std::make_shared<Actor>("bSplineBasisMesh", mSceneMeshes["bSplineBasisMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 0.2f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
 
-	minCubeExtent = mapBounds->mBoxExtendMin * mapBounds->GetActorScale();
-	maxCubeExtent = mapBounds->mBoxExtendMax * mapBounds->GetActorScale();
 
-	// Calculate center and half-dimensions for the octree boundary
-	glm::vec3 center = (minCubeExtent + maxCubeExtent) * 0.5f;
-	glm::vec3 halfDimension = (maxCubeExtent - minCubeExtent) * 0.5f;
+	//// Map Bounds
+	//mSceneActors["CubeContainer"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 50.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
+	//auto& mapBounds = mSceneActors["CubeContainer"];
 
-	// Generate Octree
-	AABB sceneBoundary{ center, halfDimension };
-	OctreePtr = std::make_unique<OctreeNode>(sceneBoundary, octreeCapacity);
+	//minCubeExtent = mapBounds->mBoxExtendMin * mapBounds->GetActorScale();
+	//maxCubeExtent = mapBounds->mBoxExtendMax * mapBounds->GetActorScale();
 
-	int AmountOfBalls = 100;
-	glm::vec3 tempVec = glm::vec3{ 0.f, 0.f, 0.f };
-	for (int i = 0; i <= AmountOfBalls; i++)
-	{
-		mSceneBallActors["SphereObject " + std::to_string(i)] = (std::make_shared<Actor>("SphereMesh", mSceneMeshes["SphereMesh"], tempVec, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, .1f, Actor::ActorType::BALL, mShader, "BlueTexture"));
-		tempVec = RandomNumberGenerator->GeneratorRandomVector(0, 25);
-		OctreePtr->Insert(mSceneBallActors["SphereObject " + std::to_string(i)]);
-	}
+	//// Calculate center and half-dimensions for the octree boundary
+	//glm::vec3 center = (minCubeExtent + maxCubeExtent) * 0.5f;
+	//glm::vec3 halfDimension = (maxCubeExtent - minCubeExtent) * 0.5f;
+
+	//// Generate Octree
+	//AABB sceneBoundary{ center, halfDimension };
+	//OctreePtr = std::make_unique<OctreeNode>(sceneBoundary, octreeCapacity);
+
+	//int AmountOfBalls = 100;
+	//glm::vec3 tempVec = glm::vec3{ 0.f, 0.f, 0.f };
+	//for (int i = 0; i <= AmountOfBalls; i++)
+	//{
+	//	mSceneBallActors["SphereObject " + std::to_string(i)] = (std::make_shared<Actor>("SphereMesh", mSceneMeshes["SphereMesh"], tempVec, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, .1f, Actor::ActorType::BALL, mShader, "BlueTexture"));
+	//	tempVec = RandomNumberGenerator->GeneratorRandomVector(0, 25);
+	//	OctreePtr->Insert(mSceneBallActors["SphereObject " + std::to_string(i)]);
+	//}
 }
 
 void Scene::LoadVariables()
