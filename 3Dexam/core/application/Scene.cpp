@@ -89,7 +89,7 @@ void Scene::LoadMeshes()
 // Actor loading, adding them into a vector of actors
 void Scene::LoadActors()
 {
-	mSceneActors["bSplineBasis"] = (std::make_shared<Actor>("bSplineBasisMesh", mSceneMeshes["bSplineBasisMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 0.2f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
+	mSceneActors["bSplineBasis"] = (std::make_shared<Actor>("bSplineBasisMesh", mSceneMeshes["bSplineBasisMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
 
 
 	//// Map Bounds

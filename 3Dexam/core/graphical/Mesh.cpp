@@ -46,11 +46,11 @@ Mesh::Mesh(MeshShape meshShape, Shader* meshShader) : mMeshShape(meshShape), mMe
 		break;
 
 	case MeshShape::BSPLINEBASIS:
-		DrawBSplineBasisFunction();
+		BSplineSurface();
 		break;
 
 	case MeshShape::BSPLINEBIQUADRIC:
-		DrawBSplineBasisFunction();
+		BSplineSurface();
 		break;
 
 	default:
@@ -66,7 +66,7 @@ void Mesh::RenderMesh()
 
 	// If the mesh is a line or a point, it will only use the vertices array, else draw with indices
 	glBindVertexArray(mVAO);
-	if (mMeshShape == MeshShape::LINE || mMeshShape == MeshShape::LINECURVE || mMeshShape == MeshShape::BSPLINEBASIS || mMeshShape == MeshShape::BSPLINEBIQUADRIC)
+	if (mMeshShape == MeshShape::LINE || mMeshShape == MeshShape::LINECURVE /*|| mMeshShape == MeshShape::BSPLINEBASIS || mMeshShape == MeshShape::BSPLINEBIQUADRIC*/)
 	{
 		glLineWidth(8.f);
 		glDrawArrays(GL_LINE_STRIP, 0, mVertices.size());
@@ -575,6 +575,134 @@ float Mesh::CalculateRadius()
 	float radius = (std::abs(maxExtent.x - minExtent.x) / 2);
 
 	return radius;
+}
+
+std::pair<glm::vec3, glm::vec3> Mesh::B2(float tu, float tv, int my_u, int my_v)
+{
+	glm::vec3 Bu, Bv;
+
+	// Calculate the B-spline coefficients based on the B-spline basis functions.
+	// This is a simplified approach; the coefficients need to be drawn from the actual basis functions.
+	// Assuming you have functions or logic to get these:
+	// Example computation (you need to implement the actual logic)
+	//Bu = Vec3(/* ... compute based on tu and my_u ... */);
+	//Bv = Vec3(/* ... compute based on tv and my_v ... */);
+
+	return std::make_pair(Bu, Bv);
+}
+
+glm::vec3 Mesh::evaluateBiQuadratic(int my_u, int my_v, glm::vec3 bu, glm::vec3 bv)
+{
+	glm::vec3 result(0.0f, 0.0f, 0.0f);
+
+	// Compute the point on the surface based on the B-spline coefficients
+	for (int j = 0; j < 3; j++)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			// Check if accessing a valid position in mc
+			int index = my_u + i + (my_v + j) * n_u;
+
+			if (index < mc.size()) {
+				result += mc[index] * (bu[i] * bv[j]); // Control points times weights
+			}
+			else {
+				// Handle cases where index is out of bounds
+				// This situation should ideally not occur with correct configs.
+				std::cerr << "Control point index out of bounds!" << std::endl;
+			}
+		}
+	}
+	return result;
+}
+
+void Mesh::makeBiQuadraticSurface()
+{
+	int nu = n_u - d_u + 1;
+	int nv = n_v - d_v + 1;
+
+	mVertices.clear();
+	mIndices.clear();
+
+	for (int i = 0; i < nv; i++)
+	{
+		for (int j = 0; j < nu; j++)
+		{
+			float u = j * h;
+			float v = i * h;
+
+			int my_u = findKnotInterval(mu, d_u, n_u, u);
+			int my_v = findKnotInterval(mv, d_v, n_v, v);
+
+			if (my_u == -1 || my_v == -1)
+			{
+				continue; // Handle out of bounds safely
+			}
+
+			auto coeff_pair = B2(u, v, my_u, my_v);
+			glm::vec3 p = evaluateBiQuadratic(my_u, my_v, coeff_pair.first, coeff_pair.second);
+			mVertices.push_back({ p.x, p.y, p.z });
+
+			// Ensure safe setup for triangle indices
+			if (i < nv - 1 && j < nu - 1)
+			{
+				mIndices.push_back(i * nu + j);
+				mIndices.push_back(i * nu + (j + 1));
+				mIndices.push_back((i + 1) * nu + j);
+
+				mIndices.push_back(i * nu + (j + 1));
+				mIndices.push_back((i + 1) * nu + (j + 1));
+				mIndices.push_back((i + 1) * nu + j);
+			}
+		}
+	}
+}
+
+void Mesh::BSplineSurface()
+{
+	mName = "test"; // Initialize knot vectors
+	mu = { 0,0,0,1,2,2,2 }; // Knot vector for u
+	mv = { 0,0,0,1,1,1 }; // Knot vector for v
+
+	// Initialize control points
+	for (int i = 0; i < n_u; i++)
+	{
+		mc.emplace_back(glm::vec3(i, 0, 0)); // First row of control points
+	}
+	mc.emplace_back(glm::vec3(0, 1, 0));
+	mc.emplace_back(glm::vec3(1, 1, 2));
+	mc.emplace_back(glm::vec3(2, 1, 2));
+	mc.emplace_back(glm::vec3(3, 1, 0));
+
+	for (int i = 0; i < n_u; i++)
+	{
+		mc.emplace_back(glm::vec3(i, 2, 0)); // Second row of control points
+	}
+	// Create the bi-quadratic surface
+	makeBiQuadraticSurface();
+}
+
+int Mesh::findKnotInterval(std::vector<float> _mu, int _d_u, int _n_u, float _u)
+{
+	// Safety check for knot vector size
+	if (_mu.size() < _n_u + 1) {
+		return -1; // Return -1 if the knot vector is too small
+	}
+
+	// Check if the parameter is out of bounds
+	if (_u < _mu[_d_u] || _u > _mu[_n_u]) {
+		return -1; // Return -1 to indicate out of bounds
+	}
+
+	// Find the knot interval
+	for (int i = _d_u; i < _n_u + 1; ++i) {
+		if (_u < _mu[i]) {
+			return i - 1; // Return the index of the knot interval
+		}
+	}
+
+	// Return the last interval if parameter is at the end
+	return _n_u - 1;
 }
 
 //std::pair<glm::vec3, glm::vec3> Mesh::CalculateBoxExtent(std::vector<Vertex>& BoxVertVector)

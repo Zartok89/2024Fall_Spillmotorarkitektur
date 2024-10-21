@@ -127,4 +127,21 @@ public:
 	float mTerrainDepth{ 40.f };
 	float mTerrainDivisionsWidth{ 40.f };
 	float mTerrainDivisionsDepth{ 20.f };
+
+	/* TESTING DAG FUNCTION */
+	int n_u = 4; // Number of control points in u direction
+	int n_v = 3; // Number of control points in v direction
+	int d_u = 2; // Degree in u direction
+	int d_v = 2; // Degree in v direction
+	float h = 0.1f; // Spacing
+	std::string mName;
+	std::vector<float> mu; // Knot vector for u
+	std::vector<float> mv; // Knot vector for v
+	std::vector<glm::vec3> mc; // Control points
+	std::pair<glm::vec3, glm::vec3> B2(float tu, float tv, int my_u, int my_v);
+	glm::vec3 evaluateBiQuadratic(int my_u, int my_v, glm::vec3 bu, glm::vec3 bv);
+	void makeBiQuadraticSurface();
+	void BSplineSurface();
+	int findKnotInterval(std::vector<float> _mu, int _d_u, int _n_u, float _u);
+
 };
