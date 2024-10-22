@@ -155,40 +155,9 @@ public:
 
 	void GenerateIndices(int uResolution, int vResolution);
 
-	glm::vec3 EvaluateBSplineSurface(float u, float v, int degreeU, int degreeV,
-		const std::vector<float>& uKnot, const std::vector<float>& vKnot,
-		const std::vector<std::vector<glm::vec3>>& controlPoints);
+	glm::vec3 EvaluateBSplineSurface(float u, float v, int degreeU, int degreeV, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints);
 
-	glm::vec3 EvaluateBSplineNormal(float u, float v, int degreeU, int degreeV, double invUResolution, double invVResolution,
-		const std::vector<float>& uKnot, const std::vector<float>& vKnot,
-		const std::vector<std::vector<glm::vec3>>& controlPoints);
+	glm::vec3 EvaluateBSplineNormal(float u, float v, int degreeU, int degreeV, double invUResolution, double invVResolution, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints);
 
 	float CoxDeBoorRecursive(int i, int degree, float uv, const std::vector<float>& knotVector);
-
-	//	void CreateBSplineSurface(int _UResolution, int _VResolution, int _du,
-	//	int _dv, const std::vector<float>& _uKnot, const std::vector<float>& _vKnot,
-	//	const std::vector<std::vector<glm::vec3>>& _controlPoints, std::string _customName);
-
-	//glm::vec3 EvaluateBSplineSurface(float _u, float _v, int _du, int _dv, const std::vector<float>& _uKnot, const std::vector<float>& _vKnot, const std::vector<std::vector<glm::vec3>>& _controlPoints);
-
-	//glm::vec3 EvaluateBSplineNormal(float _u, float _v, int _du, int _dv, int _UResolution, int _VResolution, const std::vector<float>& _uKnot,
-	//	const std::vector<float>& _vKnot, const std::vector<std::vector<glm::vec3>>& _controlPoints);
-
-	//float CoxDeBoorRecursive(int _i, int _d, float _uv, const std::vector<float>& _knotVector);
-
-	///* TESTING DAG FUNCTION */ // ------NOPE-------- ///
-	//int n_u = 4; // Number of control points in u direction
-	//int n_v = 3; // Number of control points in v direction
-	//int d_u = 2; // Degree in u direction
-	//int d_v = 2; // Degree in v direction
-	//float h = 0.1f; // Spacing
-	//std::string mName;
-	//std::vector<float> mu; // Knot vector for u
-	//std::vector<float> mv; // Knot vector for v
-	//std::vector<glm::vec3> mc; // Control points
-	//std::pair<glm::vec3, glm::vec3> B2(float tu, float tv, int my_u, int my_v);
-	//glm::vec3 evaluateBiQuadratic(int my_u, int my_v, glm::vec3 bu, glm::vec3 bv);
-	//void makeBiQuadraticSurface();
-	//void BSplineSurface();
-	//int findKnotInterval(std::vector<float> _mu, int _d_u, int _n_u, float _u);
 };
