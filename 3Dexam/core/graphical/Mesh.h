@@ -127,39 +127,54 @@ public:
 	float mTerrainDepth{ 40.f };
 	float mTerrainDivisionsWidth{ 40.f };
 	float mTerrainDivisionsDepth{ 20.f };
-	bool setWireframe{false};
+	bool setWireframe{ false };
 
-	// Define degrees 2 = Bi-Quadratic
+	/* BiQuadratic Spline Variables*/
+	// Degrees
 	int Du = 2;
 	int Dv = 2;
 
-	// Define resolution
+	// Resolution
 	int UResolution = 20;
 	int VResolution = 20;
 
-	// Define knot vectors
-	std::vector<float> uKnot = { 0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0 };
-	std::vector<float> vKnot = { 0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0 };
+	// Knot Vectors
+	std::vector<float> uKnot = { 0.0,0.0,0.0,1.0,2.0,2.0,2.0 };
+	std::vector<float> vKnot = { 0.0,0.0,0.0,1.0,2.0,2.0,2.0 };
 
-	// Define control points (2D grid)
+	// Control Points
 	std::vector<std::vector<glm::vec3>> controlPoints = {
-		{glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(2.0f, 0.0f, 0.0f)},
-		{glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(1.0f, 2.0f, 1.0f), glm::vec3(2.0f, 1.0f, 1.0f)},
-		{glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(1.0f, 1.0f, 2.0f), glm::vec3(2.0f, 0.0f, 2.0f)}
+	{glm::vec3(0.0f,0.0f,0.0f), glm::vec3(1.0f,1.0f,0.0f), glm::vec3(2.0f,0.0f,0.0f)},
+	{glm::vec3(0.0f,1.0f,1.0f), glm::vec3(1.0f,2.0f,1.0f), glm::vec3(2.0f,1.0f,1.0f)},
+	{glm::vec3(0.0f,0.0f,2.0f), glm::vec3(1.0f,1.0f,2.0f), glm::vec3(2.0f,0.0f,2.0f)}
 	};
 
-	//AddActorToLevel(BSplineSurface);
+	void CreateBSplineSurface(int uResolution, int vResolution, int degreeU, int degreeV,
+		const std::vector<float>& uKnot, const std::vector<float>& vKnot,
+		const std::vector<std::vector<glm::vec3>>& controlPoints, const std::string& customName);
 
-	void CreateBSplineSurface(int _UResolution, int _VResolution, int _du,
-		int _dv, const std::vector<float>& _uKnot, const std::vector<float>& _vKnot,
-		const std::vector<std::vector<glm::vec3>>& _controlPoints, std::string _customName);
+	void GenerateIndices(int uResolution, int vResolution);
 
-	glm::vec3 EvaluateBSplineSurface(float _u, float _v, int _du, int _dv, const std::vector<float>& _uKnot, const std::vector<float>& _vKnot, const std::vector<std::vector<glm::vec3>>& _controlPoints);
+	glm::vec3 EvaluateBSplineSurface(float u, float v, int degreeU, int degreeV,
+		const std::vector<float>& uKnot, const std::vector<float>& vKnot,
+		const std::vector<std::vector<glm::vec3>>& controlPoints);
 
-	glm::vec3 EvaluateBSplineNormal(float _u, float _v, int _du, int _dv, int _UResolution, int _VResolution, const std::vector<float>& _uKnot,
-		const std::vector<float>& _vKnot, const std::vector<std::vector<glm::vec3>>& _controlPoints);
+	glm::vec3 EvaluateBSplineNormal(float u, float v, int degreeU, int degreeV, double invUResolution, double invVResolution,
+		const std::vector<float>& uKnot, const std::vector<float>& vKnot,
+		const std::vector<std::vector<glm::vec3>>& controlPoints);
 
-	float CoxDeBoorRecursive(int _i, int _d, float _uv, const std::vector<float>& _knotVector);
+	float CoxDeBoorRecursive(int i, int degree, float uv, const std::vector<float>& knotVector);
+
+	//	void CreateBSplineSurface(int _UResolution, int _VResolution, int _du,
+	//	int _dv, const std::vector<float>& _uKnot, const std::vector<float>& _vKnot,
+	//	const std::vector<std::vector<glm::vec3>>& _controlPoints, std::string _customName);
+
+	//glm::vec3 EvaluateBSplineSurface(float _u, float _v, int _du, int _dv, const std::vector<float>& _uKnot, const std::vector<float>& _vKnot, const std::vector<std::vector<glm::vec3>>& _controlPoints);
+
+	//glm::vec3 EvaluateBSplineNormal(float _u, float _v, int _du, int _dv, int _UResolution, int _VResolution, const std::vector<float>& _uKnot,
+	//	const std::vector<float>& _vKnot, const std::vector<std::vector<glm::vec3>>& _controlPoints);
+
+	//float CoxDeBoorRecursive(int _i, int _d, float _uv, const std::vector<float>& _knotVector);
 
 	///* TESTING DAG FUNCTION */ // ------NOPE-------- ///
 	//int n_u = 4; // Number of control points in u direction

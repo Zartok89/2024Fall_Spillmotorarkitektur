@@ -421,127 +421,95 @@ void Mesh::GenerateCurvedTerrain(float planeWidth, float planeDepth, int divisio
 	}
 }
 
-void Mesh::CreateBSplineSurface(int _UResolution, int _VResolution, int _du, int _dv,
-	const std::vector<float>& _uKnot, const std::vector<float>& _vKnot,
-	const std::vector<std::vector<glm::vec3>>& _controlPoints, std::string _customName)
+/*
+ * B-SplineSurface
+ */
+
+void Mesh::CreateBSplineSurface(int uResolution, int vResolution, int degreeU, int degreeV, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints, const std::string& customName)
 {
-	// Create key
-	std::string surfaceKey = "DefaultSurface";
+	std::string surfaceKey = customName.empty() ? "DefaultSurface" : customName;
+	double invUResolution = 1.0 / (uResolution - 1);
+	double invVResolution = 1.0 / (vResolution - 1);
 
-	// Overwrites default key if custom name is added.
-	if (!_customName.empty())
-		surfaceKey = _customName;
-
-	// Gen spline surface ----
-	for (int i = 0; i < _UResolution; ++i)
+	for (int i = 0; i < uResolution; ++i)
 	{
-		// Compute normalized u parameter in the [0, 1] range
-		double u = (double)i / (_UResolution - 1);
-
-		for (int j = 0; j < _VResolution; ++j)
+		double u = i * invUResolution;
+		for (int j = 0; j < vResolution; ++j)
 		{
-			// Compute normalized v parameter in the [0, 1] range
-			double v = (double)j / (_VResolution - 1);
-
-			// Evaluate the surface at (u, v)
-			glm::vec3 surfacePoint = EvaluateBSplineSurface(u, v, _du, _dv, _uKnot, _vKnot, _controlPoints);
-			glm::vec3 surfacePointNormal = EvaluateBSplineNormal(u, v, _du, _dv, _UResolution, _VResolution, _uKnot, _vKnot, _controlPoints);
-			glm::vec2 surfacePointTexCords = glm::vec2(u, v);
-
-			// Store the surface point
-			mVertices.push_back(Vertex(surfacePoint, surfacePointNormal, surfacePointTexCords));
+			double v = j * invVResolution;
+			glm::vec3 surfacePoint = EvaluateBSplineSurface(u, v, degreeU, degreeV, uKnot, vKnot, controlPoints);
+			glm::vec3 surfaceNormal = EvaluateBSplineNormal(u, v, degreeU, degreeV, invUResolution, invVResolution, uKnot, vKnot, controlPoints);
+			glm::vec2 texCoords(static_cast<float>(u), static_cast<float>(v));
+			mVertices.emplace_back(surfacePoint, surfaceNormal, texCoords);
 		}
 	}
 
-	for (int i = 0; i < _UResolution - 1; ++i)
-	{
-		for (int j = 0; j < _VResolution - 1; ++j)
-		{
-			// Compute indices of the four vertices of the current grid cell
-			int topLeft = i * _VResolution + j;
-			int topRight = topLeft + 1;
-			int bottomLeft = (i + 1) * _VResolution + j;
-			int bottomRight = bottomLeft + 1;
+	GenerateIndices(uResolution, vResolution);
+}
 
-			// Create two triangles for this quad (top-left triangle and bottom-right triangle)
-			mIndices.push_back(topLeft);
-			mIndices.push_back(bottomLeft);
-			mIndices.push_back(topRight);
-
-			mIndices.push_back(topRight);
-			mIndices.push_back(bottomLeft);
-			mIndices.push_back(bottomRight);
+void Mesh::GenerateIndices(int uResolution, int vResolution) {
+	for (int i = 0; i < uResolution - 1; ++i) {
+		for (int j = 0; j < vResolution - 1; ++j) {
+			unsigned int topLeft = i * vResolution + j;
+			unsigned int topRight = topLeft + 1;
+			unsigned int bottomLeft = (i + 1) * vResolution + j;
+			unsigned int bottomRight = bottomLeft + 1;
+			mIndices.insert(mIndices.end(), { topLeft, bottomLeft, topRight, topRight, bottomLeft, bottomRight });
 		}
 	}
 }
 
-glm::vec3 Mesh::EvaluateBSplineSurface(float _u, float _v, int _du, int _dv, const std::vector<float>& _uKnot,
-	const std::vector<float>& _vKnot, const std::vector<std::vector<glm::vec3>>& _controlPoints)
+glm::vec3 Mesh::EvaluateBSplineSurface(float u, float v, int degreeU, int degreeV, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints)
 {
 	glm::vec3 surfacePoint(0.0f);
-	const int numControlPointsU = _controlPoints.size() - 1;
-	const int numControlPointsV = _controlPoints[0].size() - 1;
+	int numControlPointsU = controlPoints.size() - 1;
+	int numControlPointsV = controlPoints[0].size() - 1;
 
-	// Loop through all control points
 	for (int i = 0; i <= numControlPointsU; ++i) {
+		float uBasis = CoxDeBoorRecursive(i, degreeU, u, uKnot);
 		for (int j = 0; j <= numControlPointsV; ++j) {
-			// Evaluates influence of control point i in u direction (basis function)
-			float Coxi = CoxDeBoorRecursive(i, _du, _u, _uKnot);
-			// Evaluates influence of control point j in v direction (basis function)
-			float Coxj = CoxDeBoorRecursive(j, _dv, _v, _vKnot);
-			// Sum weight * control point with the surfacePoint
-			glm::vec3 controlPointWight = Coxi * Coxj * _controlPoints[i][j];
-			surfacePoint += controlPointWight;
+			float vBasis = CoxDeBoorRecursive(j, degreeV, v, vKnot);
+			surfacePoint += uBasis * vBasis * controlPoints[i][j];
 		}
 	}
 
-	// Return the point on the surface at (u, v)
 	return surfacePoint;
 }
 
-glm::vec3 Mesh::EvaluateBSplineNormal(float _u, float _v, int _du, int _dv, int _UResolution, int _VResolution,
-	const std::vector<float>& _uKnot, const std::vector<float>& _vKnot,
-	const std::vector<std::vector<glm::vec3>>& _controlPoints)
+glm::vec3 Mesh::EvaluateBSplineNormal(float u, float v, int degreeU, int degreeV, double invUResolution, double invVResolution, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints)
 {
-	glm::vec3 P = EvaluateBSplineSurface(_u, _v, _du, _dv, _uKnot, _vKnot, _controlPoints);
-	glm::vec3 P_u = EvaluateBSplineSurface(_u + 1.0 / _UResolution, _v, _du, _dv, _uKnot, _vKnot, _controlPoints);
-	glm::vec3 P_v = EvaluateBSplineSurface(_u, _v + 1.0 / _VResolution, _du, _dv, _uKnot, _vKnot, _controlPoints);
+	float deltaU = static_cast<float>(invUResolution);
+	float deltaV = static_cast<float>(invVResolution);
 
-	// Tangents
+	glm::vec3 P = EvaluateBSplineSurface(u, v, degreeU, degreeV, uKnot, vKnot, controlPoints);
+	glm::vec3 P_u = EvaluateBSplineSurface(u + deltaU, v, degreeU, degreeV, uKnot, vKnot, controlPoints);
+	glm::vec3 P_v = EvaluateBSplineSurface(u, v + deltaV, degreeU, degreeV, uKnot, vKnot, controlPoints);
+
 	glm::vec3 T_u = P_u - P;
 	glm::vec3 T_v = P_v - P;
 
-	// Normal (cross product of tangents)
-	glm::vec3 N = glm::normalize(cross(T_u, T_v));
-
-	return N;
+	return glm::normalize(glm::cross(T_u, T_v));
 }
 
-float Mesh::CoxDeBoorRecursive(int _i, int _d, float _uv, const std::vector<float>& _knotVector)
+float Mesh::CoxDeBoorRecursive(int i, int degree, float uv, const std::vector<float>& knotVector)
 {
-	if (_d == 0) {
-		// If dimension is 0 compare knot vectors and return value
-		return (_knotVector[_i] <= _uv && _uv < _knotVector[_i + 1]) ? 1.0f : 0.0f;
+	if (degree == 0) {
+		return (knotVector[i] <= uv && uv < knotVector[i + 1]) ? 1.0f : 0.0f;
 	}
-	else {
-		// Otherwise sum the left and right basis formula for the total influence of control point at p.
-		float left = 0.0f;
-		float right = 0.0f;
 
-		// Left basis function term: Check for division by zero
-		float denominatorLeft = _knotVector[_i + _d] - _knotVector[_i];
-		if (denominatorLeft != 0.0f) {
-			left = (_uv - _knotVector[_i]) / denominatorLeft * CoxDeBoorRecursive(_i, _d - 1, _uv, _knotVector);
-		}
+	float left = 0.0f, right = 0.0f;
 
-		// Right basis function term: Check for division by zero
-		float denominatorRight = _knotVector[_i + _d + 1] - _knotVector[_i + 1];
-		if (denominatorRight != 0.0f) {
-			right = (_knotVector[_i + _d + 1] - _uv) / denominatorRight * CoxDeBoorRecursive(_i + 1, _d - 1, _uv, _knotVector);
-		}
-
-		return left + right;
+	float denominatorLeft = knotVector[i + degree] - knotVector[i];
+	if (denominatorLeft != 0.0f) {
+		left = (uv - knotVector[i]) / denominatorLeft * CoxDeBoorRecursive(i, degree - 1, uv, knotVector);
 	}
+
+	float denominatorRight = knotVector[i + degree + 1] - knotVector[i + 1];
+	if (denominatorRight != 0.0f) {
+		right = (knotVector[i + degree + 1] - uv) / denominatorRight * CoxDeBoorRecursive(i + 1, degree - 1, uv, knotVector);
+	}
+
+	return left + right;
 }
 
 std::pair<glm::vec3, glm::vec3> Mesh::CalculateBoxExtent()
@@ -577,301 +545,3 @@ float Mesh::CalculateRadius()
 
 	return radius;
 }
-
-//****DAGS KODE, FUNGERER IKKE**********//
-//
-//float Mesh::bSplineBasis(int i, float t, int degree)
-//{
-//	const std::vector<float> knots = { 0.0f,0.0f,0.0f,1.0f,1.0f,1.0f,2.0f,2.0f,2.0f,3.0f,3.0f,3.0f };
-//
-//	if (degree == 0) {
-//		if (knots[i] <= t && t < knots[i + 1]) {
-//			return 1.0f;
-//		}
-//		else {
-//			return 0.0f;
-//		}
-//	}
-//	else {
-//		float coeff1 = 0.0f;
-//		float coeff2 = 0.0f;
-//
-//		// Calculate the first coefficient
-//		if (knots[i + degree] != knots[i]) {
-//			coeff1 = (t - knots[i]) / (knots[i + degree] - knots[i]);
-//		}
-//
-//		// Calculate the second coefficient
-//		if (knots[i + degree + 1] != knots[i + 1])
-//		{
-//			coeff2 = (knots[i + degree + 1] - t) / (knots[i + degree + 1] - knots[i + 1]);
-//		}
-//
-//		// Recursively calculate the basis functions return coeff1 * bSplineBasis(i, t, degree -1) + coeff2 * bSplineBasis(i +1, t, degree -1);
-//	}
-//
-//	//const std::vector<float> knots = { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f };
-//
-//	//if (degree == 0) {
-//	//	if (knots[i] <= t && t < knots[i + 1]) {
-//	//		return 1.0f;
-//	//	}
-//	//	else {
-//	//		return 0.0f;
-//	//	}
-//	//}
-//	//else {
-//	//	float coeff1 = 0.0f;
-//	//	float coeff2 = 0.0f;
-//
-//	//	// Calculate the first coefficient
-//	//	if (knots[i + degree] != knots[i]) {
-//	//		coeff1 = (t - knots[i]) / (knots[i + degree] - knots[i]);
-//	//	}
-//
-//	//	// Calculate the second coefficient
-//	//	if (knots[i + degree + 1] != knots[i + 1]) {
-//	//		coeff2 = (knots[i + degree + 1] - t) / (knots[i + degree + 1] - knots[i + 1]);
-//	//	}
-//
-//	//	// Recursively calculate the basis functions
-//	//	return coeff1 * bSplineBasis(i, t, degree - 1) + coeff2 * bSplineBasis(i + 1, t, degree - 1);
-//	//}
-//}
-//
-//float Mesh::bSplineBasisBiQuadratic(int i, int j, float u, float v)
-//{
-//	const int degree = 2;
-//	return bSplineBasis(i, u, degree) * bSplineBasis(j, v, degree);
-//}
-//
-//void Mesh::DrawBSplineBasisFunction()
-//{
-//	//std::vector<glm::vec3> controlPoints = {
-//	//{0.0f,0.0f,0.0f}, // P00
-//	//{1.0f,0.0f,0.0f}, // P01
-//	//{2.0f,0.0f,0.0f}, // P02
-//	//{0.0f,1.0f,1.0f}, // P10
-//	//{1.0f,1.0f,2.0f}, // P11
-//	//{2.0f,1.0f,1.0f}, // P12
-//	//{0.0f,2.0f,0.0f}, // P20
-//	//{1.0f,2.0f,0.0f}, // P21
-//	//{2.0f,2.0f,0.0f} // P22
-//	//};
-//
-//	std::vector<glm::vec3> controlPoints = {
-// {0.0f,0.0f,0.0f}, // P00
-//		{1.0f,2.0f,0.0f}, // P01
-//		{2.0f,0.0f,0.0f}, // P02
-//		{0.0f,1.0f,1.0f}, // P10
-//		{1.0f,3.0f,2.0f}, // P11
-//		{2.0f,1.0f,1.0f}, // P12
-//		{0.0f,0.0f,0.0f}, // P20
-//		{1.0f,1.0f,0.0f}, // P21
-//		{2.0f,0.0f,0.0f} // P22};
-//	};
-//
-//	mVertices.clear();
-//
-//	// Draw B-Spline Basis Functions
-//
-//	if (MeshShape::BSPLINEBASIS)
-//	{
-//		for (float t = 0.0f; t <= 3.0f; t += 0.01f) // Adjust range based on knots
-//		{
-//			Vertex point = { 0.0f, 0.0f, 0.0f }; // Initialize point as a Vertex type // Sum the contributions from all control points
-//			for (size_t i = 0; i < controlPoints.size(); ++i)
-//			{
-//				float basisValue = bSplineBasis(i, t, 2); // Degree2
-//				point.mPosition.x += controlPoints[i].x * basisValue; // Weighted x position
-//				point.mPosition.y += controlPoints[i].y * basisValue; // Weighted y position
-//				point.mPosition.z += controlPoints[i].z * basisValue; // Weighted z position
-//			}
-//
-//			mVertices.emplace_back(point); // Add point to the vertex list
-//		}
-//
-//		//for (int i = 0; i < 3; ++i)
-//		//{
-//		//	for (float t = 0.0f; t <= 1.0f; t += 0.01f)
-//		//	{
-//		//		float value = bSplineBasis(i, t, 2);
-//		//		float xPos = controlPoints[i].x * value; // X position
-//		//		float zPos = controlPoints[i].z; // Z position should be constant for this basis function
-//		//		mVertices.emplace_back(xPos, 0.0f, zPos); // Create vertex
-//		//	}
-//		//}
-//	}
-//
-//	if (MeshShape::BSPLINEBIQUADRIC)
-//	{
-//		for (int i = 0; i < 3; ++i) // For basis functions in u direction
-//		{
-//			for (int j = 0; j < 3; ++j) // For basis functions in v direction
-//			{
-//				for (float u = 0.0f; u <= 1.0f; u += 0.01f)
-//				{
-//					for (float v = 0.0f; v <= 1.0f; v += 0.01f)
-//					{
-//						float value = bSplineBasisBiQuadratic(i, j, u, v); // Evaluate bi-quadratic basis function
-//						glm::vec3 controlPoint = controlPoints[i + j * 3]; // Get the control point
-//						mVertices.emplace_back(controlPoint.x * value, controlPoint.y * value, controlPoint.z * value); // Create vertex
-//					}
-//				}
-//			}
-//		}
-//	}
-//}
-//
-
-//
-//std::shared_ptr<Mesh> Mesh::CreateBSplineSurface(int _UResolution, int _VResolution, int _du, int _dv,
-//	const std::vector<float>& _uKnot, const std::vector<float>& _vKnot,
-//	const std::vector<std::vector<glm::vec3>>& _controlPoints, std::string _customName)
-//{
-//
-//}
-//
-//std::pair<glm::vec3, glm::vec3> Mesh::B2(float tu, float tv, int my_u, int my_v)
-//{
-//	glm::vec3 Bu, Bv;
-//
-//	// Calculate the B-spline coefficients based on the B-spline basis functions.
-//	// This is a simplified approach; the coefficients need to be drawn from the actual basis functions.
-//	// Assuming you have functions or logic to get these:
-//	// Example computation (you need to implement the actual logic)
-//	//Bu = Vec3(/* ... compute based on tu and my_u ... */);
-//	//Bv = Vec3(/* ... compute based on tv and my_v ... */);
-//
-//	return std::make_pair(Bu, Bv);
-//}
-//
-//glm::vec3 Mesh::evaluateBiQuadratic(int my_u, int my_v, glm::vec3 bu, glm::vec3 bv)
-//{
-//	glm::vec3 result(0.0f, 0.0f, 0.0f);
-//
-//	// Compute the point on the surface based on the B-spline coefficients
-//	for (int j = 0; j < 3; j++)
-//	{
-//		for (int i = 0; i < 3; i++)
-//		{
-//			// Check if accessing a valid position in mc
-//			int index = my_u + i + (my_v + j) * n_u;
-//
-//			if (index < mc.size()) {
-//				result += mc[index] * (bu[i] * bv[j]); // Control points times weights
-//			}
-//			else {
-//				// Handle cases where index is out of bounds
-//				// This situation should ideally not occur with correct configs.
-//				std::cerr << "Control point index out of bounds!" << std::endl;
-//			}
-//		}
-//	}
-//	return result;
-//}
-//
-//void Mesh::makeBiQuadraticSurface()
-//{
-//	int nu = n_u - d_u + 1;
-//	int nv = n_v - d_v + 1;
-//
-//	mVertices.clear();
-//	mIndices.clear();
-//
-//	for (int i = 0; i < nv; i++)
-//	{
-//		for (int j = 0; j < nu; j++)
-//		{
-//			float u = j * h;
-//			float v = i * h;
-//
-//			int my_u = findKnotInterval(mu, d_u, n_u, u);
-//			int my_v = findKnotInterval(mv, d_v, n_v, v);
-//
-//			if (my_u == -1 || my_v == -1)
-//			{
-//				continue; // Handle out of bounds safely
-//			}
-//
-//			auto coeff_pair = B2(u, v, my_u, my_v);
-//			glm::vec3 p = evaluateBiQuadratic(my_u, my_v, coeff_pair.first, coeff_pair.second);
-//			mVertices.push_back({ p.x, p.y, p.z });
-//
-//			// Ensure safe setup for triangle indices
-//			if (i < nv - 1 && j < nu - 1)
-//			{
-//				mIndices.push_back(i * nu + j);
-//				mIndices.push_back(i * nu + (j + 1));
-//				mIndices.push_back((i + 1) * nu + j);
-//
-//				mIndices.push_back(i * nu + (j + 1));
-//				mIndices.push_back((i + 1) * nu + (j + 1));
-//				mIndices.push_back((i + 1) * nu + j);
-//			}
-//		}
-//	}
-//}
-//
-//void Mesh::BSplineSurface()
-//{
-//	mName = "test"; // Initialize knot vectors
-//	mu = { 0,0,0,1,2,2,2 }; // Knot vector for u
-//	mv = { 0,0,0,1,1,1 }; // Knot vector for v
-//
-//	// Initialize control points
-//	for (int i = 0; i < n_u; i++)
-//	{
-//		mc.emplace_back(glm::vec3(i, 0, 0)); // First row of control points
-//	}
-//	mc.emplace_back(glm::vec3(0, 1, 0));
-//	mc.emplace_back(glm::vec3(1, 1, 2));
-//	mc.emplace_back(glm::vec3(2, 1, 2));
-//	mc.emplace_back(glm::vec3(3, 1, 0));
-//
-//	for (int i = 0; i < n_u; i++)
-//	{
-//		mc.emplace_back(glm::vec3(i, 2, 0)); // Second row of control points
-//	}
-//	// Create the bi-quadratic surface
-//	makeBiQuadraticSurface();
-//}
-//
-//int Mesh::findKnotInterval(std::vector<float> _mu, int _d_u, int _n_u, float _u)
-//{
-//	// Safety check for knot vector size
-//	if (_mu.size() < _n_u + 1) {
-//		return -1; // Return -1 if the knot vector is too small
-//	}
-//
-//	// Check if the parameter is out of bounds
-//	if (_u < _mu[_d_u] || _u > _mu[_n_u]) {
-//		return -1; // Return -1 to indicate out of bounds
-//	}
-//
-//	// Find the knot interval
-//	for (int i = _d_u; i < _n_u + 1; ++i) {
-//		if (_u < _mu[i]) {
-//			return i - 1; // Return the index of the knot interval
-//		}
-//	}
-//
-//	// Return the last interval if parameter is at the end
-//	return _n_u - 1;
-//}
-
-//std::pair<glm::vec3, glm::vec3> Mesh::CalculateBoxExtent(std::vector<Vertex>& BoxVertVector)
-//{
-//	if (BoxVertVector.empty()) { return std::pair<glm::vec3, glm::vec3>(); }
-//
-//	glm::vec3 minExtent = BoxVertVector[0].mPosition;
-//	glm::vec3 maxExtent = BoxVertVector[0].mPosition;
-//
-//	for (const auto& vertex : BoxVertVector)
-//	{
-//		minExtent = glm::min(minExtent, vertex.mPosition);
-//		maxExtent = glm::max(maxExtent, vertex.mPosition);
-//	}
-//	std::pair<glm::vec3, glm::vec3> extentPair = std::make_pair(minExtent, maxExtent);
-//	return extentPair;
-//}
