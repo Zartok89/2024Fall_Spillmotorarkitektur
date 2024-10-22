@@ -54,8 +54,6 @@ void Scene::RenderScene()
 // **running before the "while loop" of main()**
 void Scene::LoadScene()
 {
-	glLineWidth(10.f);
-
 	LoadTextures();
 	LoadMeshes();
 	LoadActors();
@@ -89,8 +87,7 @@ void Scene::LoadMeshes()
 // Actor loading, adding them into a vector of actors
 void Scene::LoadActors()
 {
-	mSceneActors["bSplineBasis"] = (std::make_shared<Actor>("bSplineBasisMesh", mSceneMeshes["bSplineBasisMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
-
+	mSceneActors["bSplineBasis"] = (std::make_shared<Actor>("bSplineBasisMesh", mSceneMeshes["bSplineBasisMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 3.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
 
 	//// Map Bounds
 	//mSceneActors["CubeContainer"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 50.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));

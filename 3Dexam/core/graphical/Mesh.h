@@ -127,21 +127,53 @@ public:
 	float mTerrainDepth{ 40.f };
 	float mTerrainDivisionsWidth{ 40.f };
 	float mTerrainDivisionsDepth{ 20.f };
+	bool setWireframe{false};
 
-	/* TESTING DAG FUNCTION */
-	int n_u = 4; // Number of control points in u direction
-	int n_v = 3; // Number of control points in v direction
-	int d_u = 2; // Degree in u direction
-	int d_v = 2; // Degree in v direction
-	float h = 0.1f; // Spacing
-	std::string mName;
-	std::vector<float> mu; // Knot vector for u
-	std::vector<float> mv; // Knot vector for v
-	std::vector<glm::vec3> mc; // Control points
-	std::pair<glm::vec3, glm::vec3> B2(float tu, float tv, int my_u, int my_v);
-	glm::vec3 evaluateBiQuadratic(int my_u, int my_v, glm::vec3 bu, glm::vec3 bv);
-	void makeBiQuadraticSurface();
-	void BSplineSurface();
-	int findKnotInterval(std::vector<float> _mu, int _d_u, int _n_u, float _u);
+	// Define degrees 2 = Bi-Quadratic
+	int Du = 2;
+	int Dv = 2;
 
+	// Define resolution
+	int UResolution = 20;
+	int VResolution = 20;
+
+	// Define knot vectors
+	std::vector<float> uKnot = { 0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0 };
+	std::vector<float> vKnot = { 0.0, 0.0, 0.0, 1.0, 2.0, 2.0, 2.0 };
+
+	// Define control points (2D grid)
+	std::vector<std::vector<glm::vec3>> controlPoints = {
+		{glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(2.0f, 0.0f, 0.0f)},
+		{glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(1.0f, 2.0f, 1.0f), glm::vec3(2.0f, 1.0f, 1.0f)},
+		{glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(1.0f, 1.0f, 2.0f), glm::vec3(2.0f, 0.0f, 2.0f)}
+	};
+
+	//AddActorToLevel(BSplineSurface);
+
+	void CreateBSplineSurface(int _UResolution, int _VResolution, int _du,
+		int _dv, const std::vector<float>& _uKnot, const std::vector<float>& _vKnot,
+		const std::vector<std::vector<glm::vec3>>& _controlPoints, std::string _customName);
+
+	glm::vec3 EvaluateBSplineSurface(float _u, float _v, int _du, int _dv, const std::vector<float>& _uKnot, const std::vector<float>& _vKnot, const std::vector<std::vector<glm::vec3>>& _controlPoints);
+
+	glm::vec3 EvaluateBSplineNormal(float _u, float _v, int _du, int _dv, int _UResolution, int _VResolution, const std::vector<float>& _uKnot,
+		const std::vector<float>& _vKnot, const std::vector<std::vector<glm::vec3>>& _controlPoints);
+
+	float CoxDeBoorRecursive(int _i, int _d, float _uv, const std::vector<float>& _knotVector);
+
+	///* TESTING DAG FUNCTION */ // ------NOPE-------- ///
+	//int n_u = 4; // Number of control points in u direction
+	//int n_v = 3; // Number of control points in v direction
+	//int d_u = 2; // Degree in u direction
+	//int d_v = 2; // Degree in v direction
+	//float h = 0.1f; // Spacing
+	//std::string mName;
+	//std::vector<float> mu; // Knot vector for u
+	//std::vector<float> mv; // Knot vector for v
+	//std::vector<glm::vec3> mc; // Control points
+	//std::pair<glm::vec3, glm::vec3> B2(float tu, float tv, int my_u, int my_v);
+	//glm::vec3 evaluateBiQuadratic(int my_u, int my_v, glm::vec3 bu, glm::vec3 bv);
+	//void makeBiQuadraticSurface();
+	//void BSplineSurface();
+	//int findKnotInterval(std::vector<float> _mu, int _d_u, int _n_u, float _u);
 };
