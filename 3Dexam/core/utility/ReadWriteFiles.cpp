@@ -142,12 +142,14 @@ void ReadWriteFiles::FromDataToVertexVector(std::string DataFileToVertexVector, 
 			float TempX = floats[0];
 			float TempY = floats[1];
 			float TempZ = floats[2];
+
+			VerticesVector.emplace_back(Vertex{ TempX, TempY, TempZ }/*
 			float TempR = floats[3];
 			float TempG = floats[4];
 			float TempB = floats[5];
 			float TempU = floats[6];
 			float TempV = floats[7];
-			VerticesVector.emplace_back(Vertex{ TempX, TempY, TempZ, TempR, TempG, TempB, TempU, TempV });
+			VerticesVector.emplace_back(Vertex{ TempX, TempY, TempZ, TempR, TempG, TempB, TempU, TempV }*/);
 		}
 
 		std::cout << "Amount of Vertexes added to the vector: " << VerticesVector.size() << std::endl;

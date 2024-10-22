@@ -6,6 +6,7 @@
 
 #include "utility/ICollisionBounds.h"
 #include "shader/Shader.h"
+#include "utility/ReadWriteFiles.h"
 #include "utility/VariableTypes.h"
 
 enum MeshShape
@@ -20,7 +21,8 @@ enum MeshShape
 	TERRAIN_FLAT,
 	TERRAIN_CURVED,
 	BSPLINEBASIS,
-	BSPLINEBIQUADRIC
+	BSPLINEBIQUADRIC,
+	PUNKTSKY
 };
 
 class Vertex
@@ -160,4 +162,6 @@ public:
 	glm::vec3 EvaluateBSplineNormal(float u, float v, int degreeU, int degreeV, double invUResolution, double invVResolution, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints);
 
 	float CoxDeBoorRecursive(int i, int degree, float uv, const std::vector<float>& knotVector);
+
+	void CreateDotSky();
 };

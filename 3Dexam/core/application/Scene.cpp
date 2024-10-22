@@ -82,12 +82,14 @@ void Scene::LoadMeshes()
 	mSceneMeshes["CurvedTerrainMesh"] = std::make_shared<Mesh>(MeshShape::TERRAIN_CURVED, mShader);
 	mSceneMeshes["bSplineBasisMesh"] = std::make_shared<Mesh>(MeshShape::BSPLINEBASIS, mShader);
 	mSceneMeshes["bSplineQuadricBasisMesh"] = std::make_shared<Mesh>(MeshShape::BSPLINEBIQUADRIC, mShader);
+	mSceneMeshes["PunktSkyMesh"] = std::make_shared<Mesh>(MeshShape::PUNKTSKY, mShader);
 }
 
 // Actor loading, adding them into a vector of actors
 void Scene::LoadActors()
 {
 	mSceneActors["bSplineBasis"] = (std::make_shared<Actor>("bSplineBasisMesh", mSceneMeshes["bSplineBasisMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 3.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
+	mSceneActors["PunktSky"] = (std::make_shared<Actor>("PunktSkyMesh", mSceneMeshes["PunktSkyMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 90.f, 0.1f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
 
 	//// Map Bounds
 	//mSceneActors["CubeContainer"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 50.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));

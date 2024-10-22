@@ -1,6 +1,8 @@
 #include "Mesh.h"
 #include <glad/glad.h>
 
+#include "utility/ReadWriteFiles.h"
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -53,6 +55,10 @@ Mesh::Mesh(MeshShape meshShape, Shader* meshShader) : mMeshShape(meshShape), mMe
 		CreateBSplineSurface(UResolution, VResolution, Du, Dv, uKnot, vKnot, controlPoints, "BSpline");
 		break;
 
+	case MeshShape::PUNKTSKY:
+		CreateDotSky();
+		break;
+
 	default:
 		throw std::invalid_argument("Unknown mesh shape");
 	}
@@ -81,6 +87,11 @@ void Mesh::RenderMesh()
 		//glLineWidth(8.f);
 		glDrawArrays(GL_LINE_STRIP, 0, mVertices.size());
 		//glLineWidth(5.f);
+		glDrawArrays(GL_POINTS, 0, mVertices.size());
+	}
+	if (mMeshShape == MeshShape::PUNKTSKY)
+	{
+		glLineWidth(5.f);
 		glDrawArrays(GL_POINTS, 0, mVertices.size());
 	}
 	else
@@ -510,6 +521,28 @@ float Mesh::CoxDeBoorRecursive(int i, int degree, float uv, const std::vector<fl
 	}
 
 	return left + right;
+}
+
+void Mesh::CreateDotSky()
+{
+	std::vector<Vertex> tempVertices;
+	ReadWriteFiles::FromDataToVertexVector("Hoydedata.txt", tempVertices);
+
+	glm::vec3 minVert = tempVertices[0].mPosition;
+	glm::vec3 maxVert = tempVertices[0].mPosition;
+
+	for (const auto& vertex : tempVertices)
+	{
+		minVert = glm::min(minVert, vertex.mPosition);
+		maxVert = glm::max(maxVert, vertex.mPosition);
+	}
+	glm::vec3 midPoint = (minVert + maxVert) / glm::vec3{ 2.f };
+
+	for (auto& vertex : tempVertices)
+	{
+		vertex.mPosition -= midPoint;
+		mVertices.emplace_back(vertex.mPosition.x, vertex.mPosition.y, vertex.mPosition.z);
+	}
 }
 
 std::pair<glm::vec3, glm::vec3> Mesh::CalculateBoxExtent()
