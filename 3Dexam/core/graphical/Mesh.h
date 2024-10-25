@@ -151,9 +151,7 @@ public:
 	{glm::vec3(0.0f,0.0f,2.0f), glm::vec3(1.0f,1.0f,2.0f), glm::vec3(2.0f,0.0f,2.0f)}
 	};
 
-	void CreateBSplineSurface(int uResolution, int vResolution, int degreeU, int degreeV,
-		const std::vector<float>& uKnot, const std::vector<float>& vKnot,
-		const std::vector<std::vector<glm::vec3>>& controlPoints, const std::string& customName);
+	void CreateBSplineSurface(int uResolution, int vResolution, int degreeU, int degreeV, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints, const std::string& customName);
 
 	void GenerateIndices(int uResolution, int vResolution);
 
