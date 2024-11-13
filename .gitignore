@@ -2,6 +2,7 @@
 *.o
 *.txt
 
+
 # Ignore executables
 *.exe
 *.dll

@@ -12,7 +12,7 @@ public:
 	void WriteToFile(std::string Filepath, std::vector<Vertex>& VertexVector);
 	void AppendToFile(std::string Filepath);
 	void ReadFromFile(std::string FileToRead);
-	void ReadFromFileWriteIntoNewFile(std::string FileToRead, std::string NewDataFile);
-	void FromDataToVertexVector(std::string DataFileToVertexVector, std::vector<Vertex>& VerticesVector);
-	void RemovingUnwantedChars(std::string& Line);
+	static void ReadFromFileWriteIntoNewFile(std::string FileToRead, std::string NewDataFile);
+	static void FromDataToVertexVector(std::string DataFileToVertexVector, std::vector<Vertex>& VerticesVector, bool bIsUsingColors);
+	static void RemovingUnwantedChars(std::string& Line);
 };

@@ -135,6 +135,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="core\utility\Octree.cpp" />
+    <ClCompile Include="core\graphical\Material.cpp" />
     <ClCompile Include="OpenGLFall2024.cpp" />
     <ClCompile Include="core\graphical\Actor.cpp" />
     <ClCompile Include="core\application\Application.cpp" />
@@ -171,12 +172,17 @@
     <ClInclude Include="core\graphical\Texture.h" />
     <ClInclude Include="core\utility\VariableTypes.h" />
     <ClInclude Include="core\utility\RandomNumberGenerator.h" />
+    <ClInclude Include="core\graphical\Material.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="core\shader\Shader.fs" />
     <None Include="core\shader\Shader.vs" />
     <None Include="core\shader\wireframe.fs" />
     <None Include="core\shader\wireframe.vs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Hoydedata.txt" />
+    <Text Include="NewMapData.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

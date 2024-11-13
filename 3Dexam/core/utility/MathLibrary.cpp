@@ -120,3 +120,24 @@ void LeastSquaresMethod::AddVertices(std::vector<Vertex>& verticesVector, float 
 		verticesVector.emplace_back(i, yValue, 1.f, 0.f, 1.f, 0.f);
 	}
 }
+
+float deBoorsAlgorithm::CoxDeBoorRecursive(int i, int degree, float uv, const std::vector<float>& knotVector)
+{
+		if (degree == 0) {
+		return (knotVector[i] <= uv && uv < knotVector[i + 1]) ? 1.0f : 0.0f;
+	}
+
+	float left = 0.0f, right = 0.0f;
+
+	float denominatorLeft = knotVector[i + degree] - knotVector[i];
+	if (denominatorLeft != 0.0f) {
+		left = (uv - knotVector[i]) / denominatorLeft * CoxDeBoorRecursive(i, degree - 1, uv, knotVector);
+	}
+
+	float denominatorRight = knotVector[i + degree + 1] - knotVector[i + 1];
+	if (denominatorRight != 0.0f) {
+		right = (knotVector[i + degree + 1] - uv) / denominatorRight * CoxDeBoorRecursive(i + 1, degree - 1, uv, knotVector);
+	}
+
+	return left + right;
+}

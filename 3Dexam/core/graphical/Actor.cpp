@@ -1,11 +1,12 @@
 #include "Actor.h"
+#include "graphical/Material.h"
 
 // Constructor of an actor
 Actor::Actor(const std::string& meshName, std::shared_ptr<Mesh> meshInfo, glm::vec3 position,
 	glm::vec3 rotationAxis, float rotation, float scale, ActorType actorType,
-	Shader* shader, const std::string& textureName = "")
+	Shader* shader, bool useTexture, const std::string& textureName = "")
 	: mMeshInfo(meshInfo),
-	mUseTexture(!textureName.empty()),
+	mUseTexture(useTexture),
 	mTexture(textureName),
 	mActorPosition(position),
 	mActorRotation(rotation),
@@ -14,6 +15,7 @@ Actor::Actor(const std::string& meshName, std::shared_ptr<Mesh> meshInfo, glm::v
 	mShader(shader),
 	mName(meshName),
 	mActorType(actorType)
+
 {
 	ActorTransform();
 
@@ -82,3 +84,36 @@ void Actor::SetRandomActorVelocity()
 
 	mActorVelocity = randomDirection * mActorSpeed;
 }
+//
+//// Constructor of an actor
+//Actor::Actor(const std::string& meshName, std::shared_ptr<Mesh> meshInfo, glm::vec3 position,
+//	glm::vec3 rotationAxis, float rotation, float scale, ActorType actorType,
+//	Shader* shader, bool useTexture, std::shared_ptr<Material> material, const std::string& textureName = "")
+//	: mMeshInfo(meshInfo),
+//	mUseTexture(useTexture),
+//	mTexture(textureName),
+//	mActorPosition(position),
+//	mActorRotation(rotation),
+//	mActorRotationAxis(rotationAxis),
+//	mActorScale(scale),
+//	mShader(shader),
+//	mName(meshName),
+//	mActorType(actorType),
+//	mMaterial(material)
+//
+//{
+//	ActorTransform();
+//
+//	if (actorType == ActorType::BALL || actorType == ActorType::STATIC)
+//	{
+//		SetActorCollision();
+//	}
+//
+//	if (actorType == ActorType::BALL)
+//	{
+//		mNegativeDirection = false;
+//		mActorVelocity = glm::vec3(0.f, 0.f, 0.f);
+//		mActorMass = 1.f;
+//		SetRandomActorVelocity();
+//	}
+//}

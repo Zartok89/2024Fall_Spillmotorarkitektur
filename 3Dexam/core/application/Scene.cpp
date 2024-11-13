@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/compatibility.hpp>
 #include "Scene.h"
+#include "graphical/Material.h"
 
 Scene::Scene() = default;
 
@@ -14,9 +15,11 @@ void Scene::RenderScene()
 	double currentTime = glfwGetTime();
 	float deltaTime = (float)(currentTime - previousTime);
 	previousTime = currentTime;
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	for (auto& actors : mSceneActors)
 	{
+		mSceneMeshes[actors.second->mName]->mMeshShader->use();
+
 		// Checking if the actors is to be using texture or colors
 		if (actors.second->mUseTexture == true)
 		{
@@ -27,37 +30,39 @@ void Scene::RenderScene()
 		// Running the scene logic
 		ActorSceneLogic(deltaTime, actors);
 
-		// Rendering the meshes
-		mSceneMeshes[actors.second->mName]->RenderMesh();
-	}
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	for (auto& actors : mSceneBallActors)
-	{
-		// Checking if the actors is to be using texture or colors
-		if (actors.second->mUseTexture == true)
-		{
-			mSceneTextures[actors.second->mTexture]->BindTextures();
-		}
-		mShader->setBool("useTexture", actors.second->mUseTexture);
-
-		// Running the scene logic
-		ActorSceneLogic(deltaTime, actors);
+		// Using materials
+		//actors.second->mMaterial->MaterialSetup(mShader);
 
 		// Rendering the meshes
 		mSceneMeshes[actors.second->mName]->RenderMesh();
 	}
-	HandleSceneCollision(deltaTime);
+
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	//for (auto& actors : mSceneBallActors)
+	//{
+	//	// Checking if the actors is to be using texture or colors
+	//	if (actors.second->mUseTexture == true)
+	//	{
+	//		mSceneTextures[actors.second->mTexture]->BindTextures();
+	//	}
+	//	mShader->setBool("useTexture", actors.second->mUseTexture);
+
+	//	// Running the scene logic
+	//	ActorSceneLogic(deltaTime, actors);
+
+	//	// Rendering the meshes
+	//	mSceneMeshes[actors.second->mName]->RenderMesh();
+	//}
+	//HandleSceneCollision(deltaTime);
 }
 
 // Loading all the textures, meshes and actors to be ready for rendering
 // **running before the "while loop" of main()**
 void Scene::LoadScene()
 {
-	glLineWidth(10.f);
-
 	LoadTextures();
 	LoadMeshes();
+	//LoadMaterials();
 	LoadActors();
 	LoadVariables();
 }
@@ -82,34 +87,37 @@ void Scene::LoadMeshes()
 	mSceneMeshes["SphereMesh"] = std::make_shared<Mesh>(MeshShape::SPHERE, mShader);
 	mSceneMeshes["FlatTerrainMesh"] = std::make_shared<Mesh>(MeshShape::TERRAIN_FLAT, mShader);
 	mSceneMeshes["CurvedTerrainMesh"] = std::make_shared<Mesh>(MeshShape::TERRAIN_CURVED, mShader);
+	mSceneMeshes["bSplineBasisMesh"] = std::make_shared<Mesh>(MeshShape::BSPLINEBASIS, mShader);
+	mSceneMeshes["PunktSkyMesh"] = std::make_shared<Mesh>(MeshShape::PUNKTSKY, mShader);
 }
+
+//void Scene::LoadMaterials()
+//{
+//	mSceneMaterials["DefaultMaterial"] = std::make_shared<Material>(ambient, diffuse, specular, shininess);
+//}
 
 // Actor loading, adding them into a vector of actors
 void Scene::LoadActors()
 {
-	// Map Bounds
-	mSceneActors["CubeContainer"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 50.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
-	auto& mapBounds = mSceneActors["CubeContainer"];
+	//mSceneActors["CubeContainer"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 2.f, Actor::ActorType::STATIC, mShader, false, ""));
+	//mSceneActors["bSplineBasis"] = (std::make_shared<Actor>("bSplineBasisMesh", mSceneMeshes["bSplineBasisMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 3.f, Actor::ActorType::STATIC, mShader, false, ""));
+	mSceneActors["PunktSky"] = (std::make_shared<Actor>("PunktSkyMesh", mSceneMeshes["PunktSkyMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, /*270.f*/ 0.1f, Actor::ActorType::STATIC, mShader, false, ""));
 
-	minCubeExtent = mapBounds->mBoxExtendMin * mapBounds->GetActorScale();
-	maxCubeExtent = mapBounds->mBoxExtendMax * mapBounds->GetActorScale();
+	//// Map Bounds
+	//mSceneActors["CubeContainer"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 50.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
+	//auto& mapBounds = mSceneActors["CubeContainer"];
 
-	// Calculate center and half-dimensions for the octree boundary
-	glm::vec3 center = (minCubeExtent + maxCubeExtent) * 0.5f;
-	glm::vec3 halfDimension = (maxCubeExtent - minCubeExtent) * 0.5f;
+	//minCubeExtent = mapBounds->mBoxExtendMin * mapBounds->GetActorScale();
+	//maxCubeExtent = mapBounds->mBoxExtendMax * mapBounds->GetActorScale();
 
-	// Generate Octree
-	AABB sceneBoundary{ center, halfDimension };
-	OctreePtr = std::make_unique<OctreeNode>(sceneBoundary, octreeCapacity);
-
-	int AmountOfBalls = 100;
-	glm::vec3 tempVec = glm::vec3{ 0.f, 0.f, 0.f };
-	for (int i = 0; i <= AmountOfBalls; i++)
-	{
-		mSceneBallActors["SphereObject " + std::to_string(i)] = (std::make_shared<Actor>("SphereMesh", mSceneMeshes["SphereMesh"], tempVec, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, .1f, Actor::ActorType::BALL, mShader, "BlueTexture"));
-		tempVec = RandomNumberGenerator->GeneratorRandomVector(0, 25);
-		OctreePtr->Insert(mSceneBallActors["SphereObject " + std::to_string(i)]);
-	}
+	//int AmountOfBalls = 100;
+	//glm::vec3 tempVec = glm::vec3{ 0.f, 0.f, 0.f };
+	//for (int i = 0; i <= AmountOfBalls; i++)
+	//{
+	//	mSceneBallActors["SphereObject " + std::to_string(i)] = (std::make_shared<Actor>("SphereMesh", mSceneMeshes["SphereMesh"], tempVec, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, .1f, Actor::ActorType::BALL, mShader, "BlueTexture"));
+	//	tempVec = RandomNumberGenerator->GeneratorRandomVector(0, 25);
+	//	OctreePtr->Insert(mSceneBallActors["SphereObject " + std::to_string(i)]);
+	//}
 }
 
 void Scene::LoadVariables()
@@ -405,7 +413,7 @@ void Scene::PopulateOctree()
 		auto& actor = actorPair.second;
 		OctreePtr->Insert(actor);
 	}
-}	
+}
 
 void Scene::UpdateBall(float deltaTime, std::shared_ptr<Actor>& actor)
 {
@@ -503,11 +511,3 @@ void Scene::BoxAgainstBoxCollision(float deltaTime, std::shared_ptr<Actor>& acto
 	actor->SetActorPosition(position);
 	actor->mNegativeDirection = hasCollided;
 }
-
-//void MainOctTreeStruct::InitializeOctStruct(int AmountOfStructs, std::unordered_map<std::string, std::vector<Actor&>> OctActorStructRef)
-//{
-//	for (int i = 0; i <= AmountOfStructs; i++)
-//	{
-//		OctActorStructVector.emplace_back(OctActorStructRef["OctActor" + std::to_string(i)]);
-//	}
-//}

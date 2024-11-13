@@ -1,5 +1,10 @@
 #include "Mesh.h"
+
+#include <unordered_map>
 #include <glad/glad.h>
+
+#include "utility/MathLibrary.h"
+#include "utility/ReadWriteFiles.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -45,6 +50,18 @@ Mesh::Mesh(MeshShape meshShape, Shader* meshShader) : mMeshShape(meshShape), mMe
 		GenerateCurvedTerrain(mTerrainWidth, mTerrainDepth, mTerrainDivisionsWidth, mTerrainDivisionsDepth);
 		break;
 
+	case MeshShape::BSPLINEBASIS:
+		CreateBSplineSurface(UResolution, VResolution, Du, Dv, uKnot, vKnot, controlPoints, "BSpline");
+		break;
+
+	case MeshShape::BSPLINEBIQUADRIC:
+		CreateBSplineSurface(UResolution, VResolution, Du, Dv, uKnot, vKnot, controlPoints, "BSpline");
+		break;
+
+	case MeshShape::PUNKTSKY:
+		CreateDotSky();
+		break;
+
 	default:
 		throw std::invalid_argument("Unknown mesh shape");
 	}
@@ -54,19 +71,55 @@ Mesh::Mesh(MeshShape meshShape, Shader* meshShader) : mMeshShape(meshShape), mMe
 
 void Mesh::RenderMesh()
 {
-	mMeshShader->use();
+	//mMeshShader->use();
+
+	mMeshShader->setInt("texture1", 0);
+
+	// Set static light properties
+	mMeshShader->setVec3("lightPos", lightPos);
+	mMeshShader->setVec3("lightColor", lightColor);
+	mMeshShader->setVec3("objectColor", objectColor);
+	mMeshShader->setFloat("ambientStrength", ambientStrength);
+	mMeshShader->setFloat("specularStrength", specularStrength);
+	mMeshShader->setFloat("shininess", shininess);
 
 	// If the mesh is a line or a point, it will only use the vertices array, else draw with indices
 	glBindVertexArray(mVAO);
-	if (mMeshShape == MeshShape::LINE || mMeshShape == MeshShape::LINECURVE)
+	if (mMeshShape == MeshShape::LINE || mMeshShape == MeshShape::LINECURVE /*|| mMeshShape == MeshShape::BSPLINEBASIS || mMeshShape == MeshShape::BSPLINEBIQUADRIC*/)
 	{
-		glLineWidth(8.f);
+		if (setWireframe)
+		{
+			glLineWidth(3.f);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		}
+		else
+		{
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
+
+		//glLineWidth(8.f);
 		glDrawArrays(GL_LINE_STRIP, 0, mVertices.size());
-		glLineWidth(5.f);
+		//glLineWidth(5.f);
 		glDrawArrays(GL_POINTS, 0, mVertices.size());
+	}
+	if (mMeshShape == MeshShape::PUNKTSKY)
+	{
+		glLineWidth(5.f);
+		glDrawArrays(GL_TRIANGLES, 0, mVertices.size());
 	}
 	else
 	{
+		if (setWireframe)
+		{
+			glLineWidth(3.f);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		}
+		else
+		{
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
+
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glDrawElements(GL_TRIANGLES, mIndices.size(), GL_UNSIGNED_INT, 0);
 	}
 }
@@ -284,7 +337,7 @@ void Mesh::GenerateMathCurveFunctions(float resolution, float startX, float endX
 	for (float x = startX; x <= endX; x += resolution)
 	{
 		float pointValue = pow(x, a) - b * x + c;
-		std::cout << "X: " << x << ", Y: " << pointValue << std::endl;
+		//std::cout << "X: " << x << ", Y: " << pointValue << std::endl;
 		mVertices.emplace_back(x, 1.0f, pointValue);
 	}
 }
@@ -298,7 +351,7 @@ void Mesh::GenerateMathCurveFunctions2(float resolution, float startX, float end
 	for (float x = startX; x <= endX; x += resolution)
 	{
 		float pointValue = pow(x, a) - b * x + c;
-		std::cout << "X: " << x << ", Y: " << pointValue << std::endl;
+		//std::cout << "X: " << x << ", Y: " << pointValue << std::endl;
 		mVertices.emplace_back(x, 1.0f, pointValue);
 	}
 	for (float a = 0; a <= mVertices.size() / 3; a++)
@@ -392,6 +445,231 @@ void Mesh::GenerateCurvedTerrain(float planeWidth, float planeDepth, int divisio
 	}
 }
 
+void Mesh::CreateBSplineSurface(int uResolution, int vResolution, int degreeU, int degreeV, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints, const std::string& customName)
+{
+	std::string surfaceKey = customName.empty() ? "DefaultSurface" : customName;
+	double invUResolution = 1.0 / (uResolution - 1);
+	double invVResolution = 1.0 / (vResolution - 1);
+
+	for (int i = 0; i < uResolution; ++i)
+	{
+		double u = i * invUResolution;
+		for (int j = 0; j < vResolution; ++j)
+		{
+			double v = j * invVResolution;
+			glm::vec3 surfacePoint = EvaluateBSplineSurface(u, v, degreeU, degreeV, uKnot, vKnot, controlPoints);
+			glm::vec3 surfaceNormal = EvaluateBSplineNormal(u, v, degreeU, degreeV, invUResolution, invVResolution, uKnot, vKnot, controlPoints);
+			glm::vec2 texCoords(static_cast<float>(u), static_cast<float>(v));
+			mVertices.emplace_back(surfacePoint, surfaceNormal, texCoords);
+		}
+	}
+
+	GenerateIndices(uResolution, vResolution);
+}
+
+void Mesh::GenerateIndices(int uResolution, int vResolution) {
+	for (int i = 0; i < uResolution - 1; ++i) {
+		for (int j = 0; j < vResolution - 1; ++j) {
+			unsigned int topLeft = i * vResolution + j;
+			unsigned int topRight = topLeft + 1;
+			unsigned int bottomLeft = (i + 1) * vResolution + j;
+			unsigned int bottomRight = bottomLeft + 1;
+			mIndices.insert(mIndices.end(), { topLeft, bottomLeft, topRight, topRight, bottomLeft, bottomRight });
+		}
+	}
+}
+
+glm::vec3 Mesh::EvaluateBSplineSurface(float u, float v, int degreeU, int degreeV, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints)
+{
+	glm::vec3 surfacePoint(0.0f);
+	int numControlPointsU = controlPoints.size() - 1;
+	int numControlPointsV = controlPoints[0].size() - 1;
+
+	for (int i = 0; i <= numControlPointsU; ++i) {
+		float uBasis = deBoorsAlgorithm::CoxDeBoorRecursive(i, degreeU, u, uKnot);
+		for (int j = 0; j <= numControlPointsV; ++j) {
+			float vBasis = deBoorsAlgorithm::CoxDeBoorRecursive(j, degreeV, v, vKnot);
+			surfacePoint += uBasis * vBasis * controlPoints[i][j];
+		}
+	}
+
+	return surfacePoint;
+}
+
+glm::vec3 Mesh::EvaluateBSplineNormal(float u, float v, int degreeU, int degreeV, double invUResolution, double invVResolution, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints)
+{
+	float deltaU = static_cast<float>(invUResolution);
+	float deltaV = static_cast<float>(invVResolution);
+
+	glm::vec3 P = EvaluateBSplineSurface(u, v, degreeU, degreeV, uKnot, vKnot, controlPoints);
+	glm::vec3 P_u = EvaluateBSplineSurface(u + deltaU, v, degreeU, degreeV, uKnot, vKnot, controlPoints);
+	glm::vec3 P_v = EvaluateBSplineSurface(u, v + deltaV, degreeU, degreeV, uKnot, vKnot, controlPoints);
+
+	glm::vec3 T_u = P_u - P;
+	glm::vec3 T_v = P_v - P;
+
+	return glm::normalize(glm::cross(T_u, T_v));
+}
+
+void Mesh::CreateDotSky()
+{
+	std::vector<Vertex> tempVertices;
+	ReadWriteFiles::FromDataToVertexVector("TerrainData.txt", tempVertices, true);
+
+	ReduceGridSize(tempVertices, 0.5f);
+	TriangulateVector(tempVertices);
+	glm::vec3 minVert = tempVertices[0].mPosition;
+	glm::vec3 maxVert = tempVertices[0].mPosition;
+
+	for (const auto& vertex : tempVertices)
+	{
+		minVert = glm::min(minVert, vertex.mPosition);
+		maxVert = glm::max(maxVert, vertex.mPosition);
+	}
+
+	glm::vec3 midPoint = (minVert + maxVert) / glm::vec3{ 2.f };
+
+	for (auto& vertex : tempVertices)
+	{
+		vertex.mPosition -= midPoint;
+		mVertices.emplace_back(vertex.mPosition.x, vertex.mPosition.y, vertex.mPosition.z, vertex.mColor.r, vertex.mColor.g, vertex.mColor.b);
+	}
+}
+
+void Mesh::ReduceGridSize(std::vector<Vertex>& tempVertices, float gridResolution)
+{
+	// Define the grid using a hash map to store grid cells
+	std::unordered_map<std::string, GridCell> grid;
+
+	// Assign points to grid cells
+	for (const auto& vertex : tempVertices)
+	{
+		int gridX = static_cast<int>(std::floor(vertex.mPosition.x / gridResolution));
+		int gridY = static_cast<int>(std::floor(vertex.mPosition.y / gridResolution));
+		int gridZ = static_cast<int>(std::floor(vertex.mPosition.z / gridResolution));
+
+		// Create a unique key for each grid cell
+		std::string key = std::to_string(gridX) + "_" + std::to_string(gridY) + "_" + std::to_string(gridZ);
+
+		// Accumulate positions and colors in the grid cell
+		grid[key].mSumPosition += vertex.mPosition;
+		grid[key].mSumColor += vertex.mColor;
+		grid[key].mCount += 1;
+	}
+
+	// Calculate average positions and colors for each grid cell
+	std::vector<Vertex> reducedVertices;
+	for (const auto& [key, cell] : grid)
+	{
+		if (cell.mCount > 0)
+		{
+			Vertex avgVertex{ 0.f, 0.f, 0.f, 0.f, 0.f, 0.f };
+			avgVertex.mPosition = cell.mSumPosition / static_cast<float>(cell.mCount);
+			avgVertex.mColor = cell.mSumColor / static_cast<float>(cell.mCount);
+			reducedVertices.push_back(avgVertex);
+		}
+	}
+
+	// Replace tempVertices with the reduced set
+	tempVertices = std::move(reducedVertices);
+}
+
+void Mesh::TriangulateVector(std::vector<Vertex>& tempVertices)
+{
+    size_t numVertices = tempVertices.size();  
+    int gridWidth = static_cast<int>(std::sqrt(numVertices));  
+    int gridHeight = gridWidth;  
+
+    if (gridWidth * gridHeight != numVertices) 
+	{  
+        std::cerr << "The number of vertices does not form a perfect square grid." << std::endl;  
+        return;  
+    }  
+
+    for (int i = 0; i < gridWidth - 1; ++i) 
+	{  
+        for (int j = 0; j < gridHeight - 1; ++j) 
+		{  
+            int index0 = i * gridHeight + j;  
+            int index1 = (i + 1) * gridHeight + j;  
+            int index2 = i * gridHeight + (j + 1);  
+            int index3 = (i + 1) * gridHeight + (j + 1);  
+
+            mIndices.push_back(index0);  
+            mIndices.push_back(index1);  
+            mIndices.push_back(index2);  
+
+            mIndices.push_back(index1);  
+            mIndices.push_back(index3);  
+            mIndices.push_back(index2);  
+        }  
+    }  
+
+	//// Finding min and max for x and y in the vector.
+	//float minXVert = tempVertices[0].mPosition.x;
+	//float maxXVert = tempVertices[0].mPosition.x;
+	//float minYVert = tempVertices[0].mPosition.y;
+	//float maxYVert = tempVertices[0].mPosition.y;
+	//float minZVert = tempVertices[0].mPosition.z;
+	//float maxZVert = tempVertices[0].mPosition.z;
+
+	//for (const auto& vertex : tempVertices)
+	//{
+	//	minXVert = glm::min(minXVert, vertex.mPosition.x);
+	//	maxXVert = glm::max(maxXVert, vertex.mPosition.x);
+	//	minYVert = glm::min(minYVert, vertex.mPosition.y);
+	//	maxYVert = glm::max(maxYVert, vertex.mPosition.y);
+	//	minZVert = glm::min(minZVert, vertex.mPosition.z);
+	//	maxZVert = glm::max(maxZVert, vertex.mPosition.z);
+	//}
+
+	//// Defining grid resolution
+	//int gridWidth = static_cast<int>(std::ceil((maxXVert - minXVert) / gridResolution));
+	//int gridHeight = static_cast<int>(std::ceil((maxYVert - minYVert) / gridResolution));
+	//int gridDepth = static_cast<int>(std::ceil((maxZVert - minZVert) / gridResolution));
+
+	//// Initializing the grid
+	//std::vector<std::vector<std::vector<GridCell>>> grid(gridWidth, std::vector<std::vector<GridCell>>(gridHeight, std::vector<GridCell>(gridDepth)));
+	//std::cout << "Grid Width: " << gridWidth << ", Grid Height: " << gridHeight << ", Grid Depth: " << gridDepth << "\n";
+
+	//// Assigning points to the grid cells
+	//for (const auto& vertex : tempVertices) {
+	//	int gridX = static_cast<int>((vertex.mPosition.x - minXVert) / gridResolution);
+	//	int gridY = static_cast<int>((vertex.mPosition.y - minYVert) / gridResolution);
+	//	int gridZ = static_cast<int>((vertex.mPosition.z - minZVert) / gridResolution);
+
+	//	grid[gridX][gridY][gridZ].mSumHeight += vertex.mPosition.z;
+	//	grid[gridX][gridY][gridZ].mCount += 1;
+	//}
+
+	//// Calculating average heights
+	//for (int i = 0; i < gridWidth; ++i)
+	//{
+	//	for (int j = 0; j < gridHeight; ++j)
+	//	{
+	//		for (int k = 0; k < gridDepth; ++k)
+	//		{
+	//			if (grid[i][j][k].mCount > 0)
+	//			{
+	//				grid[i][j][k].mSumHeight /= grid[i][j][k].mCount; // Average height
+	//			}
+	//		}
+	//	}
+	//}
+
+	//float midXPoint = (minXVert + maxXVert) / 2.f;
+	//float midYPoint = (minYVert + maxYVert) / 2.f;
+	//float midZPoint = (minZVert + maxZVert) / 2.f;
+
+	//for (auto& vertex : tempVertices)
+	//{
+	//	vertex.mPosition.x -= midXPoint;
+	//	vertex.mPosition.y -= midYPoint;
+	//	vertex.mPosition.z -= midZPoint;
+	//	mVertices.emplace_back(vertex.mPosition.x, vertex.mPosition.y, vertex.mPosition.z, vertex.mColor.r, vertex.mColor.g, vertex.mColor.b);
+	//}
+}
+
 std::pair<glm::vec3, glm::vec3> Mesh::CalculateBoxExtent()
 {
 	if (mVertices.empty()) { return std::pair<glm::vec3, glm::vec3>(); }
@@ -425,19 +703,3 @@ float Mesh::CalculateRadius()
 
 	return radius;
 }
-
-//std::pair<glm::vec3, glm::vec3> Mesh::CalculateBoxExtent(std::vector<Vertex>& BoxVertVector)
-//{
-//	if (BoxVertVector.empty()) { return std::pair<glm::vec3, glm::vec3>(); }
-//
-//	glm::vec3 minExtent = BoxVertVector[0].mPosition;
-//	glm::vec3 maxExtent = BoxVertVector[0].mPosition;
-//
-//	for (const auto& vertex : BoxVertVector)
-//	{
-//		minExtent = glm::min(minExtent, vertex.mPosition);
-//		maxExtent = glm::max(maxExtent, vertex.mPosition);
-//	}
-//	std::pair<glm::vec3, glm::vec3> extentPair = std::make_pair(minExtent, maxExtent);
-//	return extentPair;
-//}

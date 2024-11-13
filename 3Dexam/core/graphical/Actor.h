@@ -6,6 +6,8 @@
 #include "Mesh.h"
 #include <utility/RandomNumberGenerator.h>
 
+class Material;
+
 class Actor
 {
 public:
@@ -24,7 +26,7 @@ public:
 	/*
 	 * Actor Constructors and setup
 	 */
-	Actor(const std::string& meshName, std::shared_ptr<Mesh> meshInfo, glm::vec3 position, glm::vec3 rotationAxis, float rotation, float scale, ActorType actorType, Shader* shader, const std::string& textureName);
+	Actor(const std::string& meshName, std::shared_ptr<Mesh> meshInfo, glm::vec3 position, glm::vec3 rotationAxis, float rotation, float scale, ActorType actorType, Shader* shader, bool useTexture, const std::string& textureName);
 	void ActorTransform();
 
 	/*
@@ -34,7 +36,7 @@ public:
 	void SetActorPosition(glm::vec3 position);
 	void SetActorCollision();
 	void SetRandomActorVelocity();
-	void SetActorVelocity(glm::vec3 actorVelocity) { mActorVelocity = actorVelocity; };
+	void SetActorVelocity(glm::vec3 actorVelocity) { mActorVelocity = actorVelocity; }
 	void SetActorSpeed(float actorSpeed) { mActorSpeed = actorSpeed; }
 	void SetActorMass(float actorMass) { mActorMass = actorMass; }
 
@@ -56,6 +58,7 @@ public:
 	std::string mName{ " " };
 	std::string mTexture{ " " };
 	bool mUseTexture{ false };
+	std::shared_ptr<Material> mMaterial;
 	ActorType mActorType{ STATIC };
 	std::shared_ptr<Mesh> mMeshInfo;
 	Shader* mShader;

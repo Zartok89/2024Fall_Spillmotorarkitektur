@@ -61,4 +61,6 @@ class NevillesAlgorithm
 
 class deBoorsAlgorithm
 {
+public:
+	static float CoxDeBoorRecursive(int i, int degree, float uv, const std::vector<float>& knotVector);
 };

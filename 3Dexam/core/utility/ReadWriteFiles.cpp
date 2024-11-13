@@ -122,7 +122,7 @@ void ReadWriteFiles::ReadFromFileWriteIntoNewFile(std::string FileToRead, std::s
 	}
 }
 
-void ReadWriteFiles::FromDataToVertexVector(std::string DataFileToVertexVector, std::vector<Vertex>& VerticesVector)
+void ReadWriteFiles::FromDataToVertexVector(std::string DataFileToVertexVector, std::vector<Vertex>& VerticesVector, bool bIsUsingColors)
 {
 	std::fstream MyFile;
 	MyFile.open(DataFileToVertexVector, std::ios::in); // Read mode
@@ -139,15 +139,39 @@ void ReadWriteFiles::FromDataToVertexVector(std::string DataFileToVertexVector, 
 			{
 				floats.push_back(Number);
 			}
-			float TempX = floats[0];
-			float TempY = floats[1];
-			float TempZ = floats[2];
-			float TempR = floats[3];
-			float TempG = floats[4];
-			float TempB = floats[5];
-			float TempU = floats[6];
-			float TempV = floats[7];
-			VerticesVector.emplace_back(Vertex{ TempX, TempY, TempZ, TempR, TempG, TempB, TempU, TempV });
+
+			if (bIsUsingColors)
+			{
+				float TempX = floats[0];
+				float TempY = floats[1];
+				float TempZ = floats[2];
+				float TempR = floats[3];
+				float TempG = floats[4];
+				float TempB = floats[5];
+				//float TempR = 0.f;
+				//float TempG = 1.f;
+				//float TempB = 0.f;
+				VerticesVector.emplace_back(Vertex{ TempX, TempZ, TempY, TempR, TempG, TempB });
+			}
+
+			else
+			{
+				float TempX = floats[0];
+				float TempY = floats[1];
+				float TempZ = floats[2];
+				VerticesVector.emplace_back(Vertex{ TempX, TempZ, TempY });
+			}
+
+			//float TempU = floats[6];
+			//float TempV = floats[7];
+			//VerticesVector.emplace_back(Vertex{ TempX, TempY, TempZ, TempR, TempG, TempB, TempU, TempV }*/)
+			//float TempR = floats[3];
+			//float TempG = floats[4];
+			//float TempB = floats[5];
+			//float TempN1 = floats[6];
+			//float TempN2 = floats[7];
+			//float TempN3 = floats[8];
+			//VerticesVector.emplace_back(Vertex{ glm::vec3{TempX, TempY, TempZ}, glm::vec3{TempR, TempG, TempB}, glm::vec3{TempN1, TempN2,TempN3}});
 		}
 
 		std::cout << "Amount of Vertexes added to the vector: " << VerticesVector.size() << std::endl;

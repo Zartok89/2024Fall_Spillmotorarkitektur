@@ -36,6 +36,7 @@ public:
 	void LoadScene();
 	void LoadTextures();
 	void LoadMeshes();
+	//void LoadMaterials();
 	void LoadActors();
 	void LoadVariables();
 
@@ -60,6 +61,7 @@ public:
 	 * Member variables and unordered maps
 	 */
 	std::unordered_map<std::string, std::shared_ptr<Texture>> mSceneTextures;
+	std::unordered_map<std::string, std::shared_ptr<Material>> mSceneMaterials;
 	std::unordered_map<std::string, std::shared_ptr<Mesh>> mSceneMeshes;
 	std::unordered_map<std::string, std::shared_ptr<Actor>> mSceneActors;
 	std::unordered_map<std::string, std::shared_ptr<Actor>> mSceneBallActors;
@@ -79,6 +81,12 @@ public:
 	bool movingForward;
 	float interpolateFactor;
 	float npcMovementSpeed;
+
+	// Material variables
+	glm::vec3 ambient {1.f, 1.f, 1.f};
+	glm::vec3 diffuse {1.f, 1.f, 1.f};
+	glm::vec3 specular {1.f, 1.f, 1.f};
+	float shininess {1.0f};
 
 	// Pointers
 	std::unique_ptr<RandomNumberGenerator> RandomNumberGenerator;

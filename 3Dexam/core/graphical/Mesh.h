@@ -6,6 +6,7 @@
 
 #include "utility/ICollisionBounds.h"
 #include "shader/Shader.h"
+#include "utility/ReadWriteFiles.h"
 #include "utility/VariableTypes.h"
 
 enum MeshShape
@@ -18,7 +19,10 @@ enum MeshShape
 	SPHERE,
 	CUBECOLOR,
 	TERRAIN_FLAT,
-	TERRAIN_CURVED
+	TERRAIN_CURVED,
+	BSPLINEBASIS,
+	BSPLINEBIQUADRIC,
+	PUNKTSKY
 };
 
 class Vertex
@@ -65,7 +69,25 @@ public:
 		mTexCoords = texCoords;
 	}
 
+	Vertex(const glm::vec3& position, const glm::vec3& colors, const glm::vec3& normals)
+	{
+		mPosition = position;
+		mColor = colors;
+		mNormal = normals;
+	}
+
 	static void SetupAttributes();
+};
+
+class GridCell
+{
+public:
+	GridCell() : mSumPosition(0.0f, 0.0f, 0.0f), mCount(0), mSumColor(0.0f, 0.0f, 0.0f) {}
+
+	glm::vec3 mSumPosition;
+	glm::vec3 mSumColor;
+	float mSumHeight;
+	int mCount = 0;
 };
 
 class Mesh
@@ -96,6 +118,21 @@ public:
 	void GenerateCurvedTerrain(float planeWidth, float planeDepth, int divisionsWidth, int divisionsDepth);
 
 	/*
+	 * BSplines
+	 */
+	void CreateBSplineSurface(int uResolution, int vResolution, int degreeU, int degreeV, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints, const std::string& customName);
+	void GenerateIndices(int uResolution, int vResolution);
+	glm::vec3 EvaluateBSplineSurface(float u, float v, int degreeU, int degreeV, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints);
+	glm::vec3 EvaluateBSplineNormal(float u, float v, int degreeU, int degreeV, double invUResolution, double invVResolution, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints);
+
+	/*
+	 * Terrain Generation
+	 */
+	void CreateDotSky();
+	void ReduceGridSize(std::vector<Vertex>& tempVertices, float gridResolution);
+	void TriangulateVector(std::vector<Vertex>& tempVertices);
+
+	/*
 	* Mesh Utility
 	*/
 	std::pair<glm::vec3, glm::vec3> CalculateBoxExtent();
@@ -118,4 +155,35 @@ public:
 	float mTerrainDepth{ 40.f };
 	float mTerrainDivisionsWidth{ 40.f };
 	float mTerrainDivisionsDepth{ 20.f };
+	bool setWireframe{ false };
+
+	/* BiQuadratic Spline Variables*/
+	// Degrees
+	int Du = 2;
+	int Dv = 2;
+
+	// Resolution
+	int UResolution = 20;
+	int VResolution = 20;
+
+	// Knot Vectors
+	std::vector<float> uKnot = { 0.0,0.0,0.0,1.0,2.0,2.0,2.0 };
+	std::vector<float> vKnot = { 0.0,0.0,0.0,1.0,2.0,2.0,2.0 };
+
+	// Control Points
+	std::vector<std::vector<glm::vec3>> controlPoints = {
+	{glm::vec3(0.0f,0.0f,0.0f), glm::vec3(1.0f,1.0f,0.0f), glm::vec3(2.0f,0.0f,0.0f)},
+	{glm::vec3(0.0f,1.0f,1.0f), glm::vec3(1.0f,2.0f,1.0f), glm::vec3(2.0f,1.0f,1.0f)},
+	{glm::vec3(0.0f,0.0f,2.0f), glm::vec3(1.0f,1.0f,2.0f), glm::vec3(2.0f,0.0f,2.0f)}
+	};
+
+	// Light properties
+	glm::vec3 lightPos{ 1.2f, 1.0f, 2.0f };
+	glm::vec3 lightColor{ 1.0f, 1.0f, 1.0f }; // White light
+
+	// Material properties
+	glm::vec3 objectColor{ 1.0f, 0.0f, 0.2f }; // Example object color
+	float ambientStrength = 1.f;
+	float specularStrength = 0.5f;
+	float shininess = 32.0f;
 };

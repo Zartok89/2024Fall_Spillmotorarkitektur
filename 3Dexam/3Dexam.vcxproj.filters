@@ -69,6 +69,9 @@
     <ClCompile Include="core\utility\Octree.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="core\graphical\Material.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="includes\GLFW\glfw3.h">
@@ -131,6 +134,9 @@
     <ClInclude Include="core\utility\Octree.h">
       <Filter>incl_libs</Filter>
     </ClInclude>
+    <ClInclude Include="core\graphical\Material.h">
+      <Filter>incl_libs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="core\shader\Shader.fs">
@@ -141,5 +147,9 @@
     </None>
     <None Include="core\shader\wireframe.vs" />
     <None Include="core\shader\wireframe.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Hoydedata.txt" />
+    <Text Include="NewMapData.txt" />
   </ItemGroup>
 </Project>
