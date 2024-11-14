@@ -110,20 +110,17 @@ void Mesh::RenderMesh()
 	//	glDrawArrays(GL_POINTS, 0, mVertices.size());
 	//}
 	//else
+	if (setWireframe)
 	{
-		if (setWireframe)
-		{
-			glLineWidth(3.f);
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		}
-		else
-		{
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		}
-
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glDrawElements(GL_TRIANGLES, mIndices.size(), GL_UNSIGNED_INT, 0);
+		glLineWidth(3.f);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
+	else
+	{
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
+
+	glDrawElements(GL_TRIANGLES, mIndices.size(), GL_UNSIGNED_INT, 0);
 }
 
 void Mesh::MeshSetup()

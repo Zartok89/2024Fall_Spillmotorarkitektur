@@ -50,6 +50,14 @@ void Controller::CameraInputs(double dt)
 	{
 		cameraPtr->mCameraSpeed = 20.f;
 	}
+	if (glfwGetKey(mWindow, GLFW_KEY_3) == GLFW_PRESS)
+	{
+		scenePtr->shouldRenderWireframe = false;
+	}
+	if (glfwGetKey(mWindow, GLFW_KEY_4) == GLFW_PRESS)
+	{
+		scenePtr->shouldRenderWireframe = true;
+	}
 	else if (glfwGetKey(mWindow, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE)
 	{
 		cameraPtr->mCameraSpeed = 8.f;
