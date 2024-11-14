@@ -86,6 +86,7 @@ void ReadWriteFiles::ReadFromFileWriteIntoNewFile(std::string FileToRead, std::s
 
 	if (MyFileRead.is_open() && MyFileWrite.is_open())
 	{
+		int currentLine {0};
 		MyFileWrite << std::fixed << std::setprecision(4);
 		std::cout << "Reading file: " << FileToRead << std::endl;
 		std::cout << "Starting to write into new file: " << NewDataFile << std::endl;
@@ -94,6 +95,8 @@ void ReadWriteFiles::ReadFromFileWriteIntoNewFile(std::string FileToRead, std::s
 		std::getline(MyFileRead, Line);
 		while (std::getline(MyFileRead, Line))
 		{
+			currentLine ++;
+			if (currentLine % 2 == 0) continue;
 			RemovingUnwantedChars(Line);
 
 			// Tokenize the line based on spaces
@@ -128,6 +131,7 @@ void ReadWriteFiles::FromDataToVertexVector(std::string DataFileToVertexVector, 
 	MyFile.open(DataFileToVertexVector, std::ios::in); // Read mode
 	if (MyFile.is_open())
 	{
+		int currentLine {0};
 		std::cout << "File has been opened correctly\n";
 		std::string Line;
 		while (std::getline(MyFile, Line))
@@ -137,6 +141,11 @@ void ReadWriteFiles::FromDataToVertexVector(std::string DataFileToVertexVector, 
 			float Number;
 			while (iss >> Number)
 			{
+				currentLine ++;
+				if (currentLine % 100000 == 0)
+				{
+					std::cout << currentLine << "\n";
+				}
 				floats.push_back(Number);
 			}
 

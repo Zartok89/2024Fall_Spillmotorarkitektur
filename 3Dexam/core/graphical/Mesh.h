@@ -79,16 +79,6 @@ public:
 	static void SetupAttributes();
 };
 
-class GridCell
-{
-public:
-	GridCell() : mSumPosition(0.0f, 0.0f, 0.0f), mCount(0), mSumColor(0.0f, 0.0f, 0.0f) {}
-
-	glm::vec3 mSumPosition;
-	glm::vec3 mSumColor;
-	float mSumHeight;
-	int mCount = 0;
-};
 
 class Mesh
 {
@@ -121,16 +111,17 @@ public:
 	 * BSplines
 	 */
 	void CreateBSplineSurface(int uResolution, int vResolution, int degreeU, int degreeV, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints, const std::string& customName);
-	void GenerateIndices(int uResolution, int vResolution);
+	void GenerateIndicesForBSplines(int uResolution, int vResolution);
 	glm::vec3 EvaluateBSplineSurface(float u, float v, int degreeU, int degreeV, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints);
 	glm::vec3 EvaluateBSplineNormal(float u, float v, int degreeU, int degreeV, double invUResolution, double invVResolution, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints);
 
 	/*
-	 * Terrain Generation
+	 * Point Cloud Generation and Triangulation
 	 */
-	void CreateDotSky();
-	void ReduceGridSize(std::vector<Vertex>& tempVertices, float gridResolution);
-	void TriangulateVector(std::vector<Vertex>& tempVertices);
+	void CreateMeshFromPointCloud(int resolution);
+	void GenerateAndPopulateGrid(int resolution, std::vector<Vertex>& tempVertices, float minVertX, float maxVertX, float minVertZ, float maxVertZ);
+	void TriangulateGrid(int gridWidth, int gridHeight, std::vector<unsigned int>& indices) ;
+	void CalculateNormals();
 
 	/*
 	* Mesh Utility

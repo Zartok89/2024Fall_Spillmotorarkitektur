@@ -1,5 +1,7 @@
 #include "Mesh.h"
 
+#include <algorithm>
+#include <numeric>
 #include <unordered_map>
 #include <glad/glad.h>
 
@@ -59,7 +61,7 @@ Mesh::Mesh(MeshShape meshShape, Shader* meshShader) : mMeshShape(meshShape), mMe
 		break;
 
 	case MeshShape::PUNKTSKY:
-		CreateDotSky();
+		CreateMeshFromPointCloud(250);
 		break;
 
 	default:
@@ -85,29 +87,29 @@ void Mesh::RenderMesh()
 
 	// If the mesh is a line or a point, it will only use the vertices array, else draw with indices
 	glBindVertexArray(mVAO);
-	if (mMeshShape == MeshShape::LINE || mMeshShape == MeshShape::LINECURVE /*|| mMeshShape == MeshShape::BSPLINEBASIS || mMeshShape == MeshShape::BSPLINEBIQUADRIC*/)
-	{
-		if (setWireframe)
-		{
-			glLineWidth(3.f);
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		}
-		else
-		{
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		}
+	//if (mMeshShape == MeshShape::LINE || mMeshShape == MeshShape::LINECURVE /*|| mMeshShape == MeshShape::BSPLINEBASIS || mMeshShape == MeshShape::BSPLINEBIQUADRIC*/)
+	//{
+	//	if (setWireframe)
+	//	{
+	//		glLineWidth(3.f);
+	//		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//	}
+	//	else
+	//	{
+	//		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	//	}
 
-		//glLineWidth(8.f);
-		glDrawArrays(GL_LINE_STRIP, 0, mVertices.size());
-		//glLineWidth(5.f);
-		glDrawArrays(GL_POINTS, 0, mVertices.size());
-	}
-	if (mMeshShape == MeshShape::PUNKTSKY)
-	{
-		glLineWidth(5.f);
-		glDrawArrays(GL_TRIANGLES, 0, mVertices.size());
-	}
-	else
+	//	//glLineWidth(8.f);
+	//	glDrawArrays(GL_LINE_STRIP, 0, mVertices.size());
+	//	//glLineWidth(5.f);
+	//	glDrawArrays(GL_POINTS, 0, mVertices.size());
+	//}
+	//if (mMeshShape == MeshShape::PUNKTSKY)
+	//{
+	//	glPointSize(7.f);
+	//	glDrawArrays(GL_POINTS, 0, mVertices.size());
+	//}
+	//else
 	{
 		if (setWireframe)
 		{
@@ -464,12 +466,15 @@ void Mesh::CreateBSplineSurface(int uResolution, int vResolution, int degreeU, i
 		}
 	}
 
-	GenerateIndices(uResolution, vResolution);
+	GenerateIndicesForBSplines(uResolution, vResolution);
 }
 
-void Mesh::GenerateIndices(int uResolution, int vResolution) {
-	for (int i = 0; i < uResolution - 1; ++i) {
-		for (int j = 0; j < vResolution - 1; ++j) {
+void Mesh::GenerateIndicesForBSplines(int uResolution, int vResolution)
+{
+	for (int i = 0; i < uResolution - 1; ++i)
+	{
+		for (int j = 0; j < vResolution - 1; ++j)
+		{
 			unsigned int topLeft = i * vResolution + j;
 			unsigned int topRight = topLeft + 1;
 			unsigned int bottomLeft = (i + 1) * vResolution + j;
@@ -511,163 +516,218 @@ glm::vec3 Mesh::EvaluateBSplineNormal(float u, float v, int degreeU, int degreeV
 	return glm::normalize(glm::cross(T_u, T_v));
 }
 
-void Mesh::CreateDotSky()
+void Mesh::CreateMeshFromPointCloud(int resolution)
 {
+	// Loading vertices from file into a temp vector
 	std::vector<Vertex> tempVertices;
 	ReadWriteFiles::FromDataToVertexVector("TerrainData.txt", tempVertices, true);
 
-	ReduceGridSize(tempVertices, 0.5f);
-	TriangulateVector(tempVertices);
-	glm::vec3 minVert = tempVertices[0].mPosition;
-	glm::vec3 maxVert = tempVertices[0].mPosition;
+	// Finding min and max for X, Z, and Y
+	float minVertX = tempVertices[0].mPosition.x;
+	float maxVertX = tempVertices[0].mPosition.x;
+	float minVertZ = tempVertices[0].mPosition.z;
+	float maxVertZ = tempVertices[0].mPosition.z;
+	float minVertY = tempVertices[0].mPosition.y;
+	float maxVertY = tempVertices[0].mPosition.y;
 
 	for (const auto& vertex : tempVertices)
 	{
-		minVert = glm::min(minVert, vertex.mPosition);
-		maxVert = glm::max(maxVert, vertex.mPosition);
+		minVertX = std::min(minVertX, vertex.mPosition.x);
+		maxVertX = std::max(maxVertX, vertex.mPosition.x);
+		minVertZ = std::min(minVertZ, vertex.mPosition.z);
+		maxVertZ = std::max(maxVertZ, vertex.mPosition.z);
+		minVertY = std::min(minVertY, vertex.mPosition.y);
+		maxVertY = std::max(maxVertY, vertex.mPosition.y);
 	}
 
-	glm::vec3 midPoint = (minVert + maxVert) / glm::vec3{ 2.f };
+	// Calculating the midpoint and recenter vertices
+	float midPointX = (minVertX + maxVertX) / 2.f;
+	float midPointZ = (minVertZ + maxVertZ) / 2.f;
 
 	for (auto& vertex : tempVertices)
 	{
-		vertex.mPosition -= midPoint;
-		mVertices.emplace_back(vertex.mPosition.x, vertex.mPosition.y, vertex.mPosition.z, vertex.mColor.r, vertex.mColor.g, vertex.mColor.b);
+		vertex.mPosition.x -= midPointX;
+		vertex.mPosition.z -= midPointZ;
 	}
+
+	// Generating and Populating the grid
+	GenerateAndPopulateGrid(resolution, tempVertices, minVertX, maxVertX, minVertZ, maxVertZ);
+
+	// Triangulate the grid
+	TriangulateGrid(resolution, resolution, mIndices);
+
+	// Calculating normals for each triangle
+	CalculateNormals();
 }
 
-void Mesh::ReduceGridSize(std::vector<Vertex>& tempVertices, float gridResolution)
+void Mesh::GenerateAndPopulateGrid(int resolution, std::vector<Vertex>& tempVertices, float minVertX, float maxVertX, float minVertZ, float maxVertZ)
 {
-	// Define the grid using a hash map to store grid cells
-	std::unordered_map<std::string, GridCell> grid;
+	// Calculate the width and height of the grid
+	float gridWidth = maxVertX - minVertX;
+	float gridHeight = maxVertZ - minVertZ;
 
-	// Assign points to grid cells
+	// Determine the spacing between grid points
+	float xSpacing = gridWidth / static_cast<float>(resolution - 1);
+	float zSpacing = gridHeight / static_cast<float>(resolution - 1);
+	float cellSize = std::min(xSpacing, zSpacing);
+	float halfBox = cellSize / 2.f;
+
+	// Calculate the number of cells in the X and Z directions
+	int cellsX = static_cast<int>(std::ceil(gridWidth / cellSize));
+	int cellsZ = static_cast<int>(std::ceil(gridHeight / cellSize));
+
+	// Create a 3D vector to hold vertices in each grid cell
+	std::vector<std::vector<std::vector<Vertex>>> gridVector(cellsX, std::vector<std::vector<Vertex>>(cellsZ));
+
+	// Populate the grid with vertices based on their positions
 	for (const auto& vertex : tempVertices)
 	{
-		int gridX = static_cast<int>(std::floor(vertex.mPosition.x / gridResolution));
-		int gridY = static_cast<int>(std::floor(vertex.mPosition.y / gridResolution));
-		int gridZ = static_cast<int>(std::floor(vertex.mPosition.z / gridResolution));
-
-		// Create a unique key for each grid cell
-		std::string key = std::to_string(gridX) + "_" + std::to_string(gridY) + "_" + std::to_string(gridZ);
-
-		// Accumulate positions and colors in the grid cell
-		grid[key].mSumPosition += vertex.mPosition;
-		grid[key].mSumColor += vertex.mColor;
-		grid[key].mCount += 1;
+		// Determine the cell indices for the current vertex
+		int cellX = std::clamp(static_cast<int>(std::floor(vertex.mPosition.x / cellSize)), 0, cellsX - 1);
+		int cellZ = std::clamp(static_cast<int>(std::floor(vertex.mPosition.z / cellSize)), 0, cellsZ - 1);
+		gridVector[cellX][cellZ].emplace_back(vertex);
 	}
 
-	// Calculate average positions and colors for each grid cell
-	std::vector<Vertex> reducedVertices;
-	for (const auto& [key, cell] : grid)
+	// Iterate over the grid to calculate average positions and colors
+	for (int i = 0; i < resolution; ++i)
 	{
-		if (cell.mCount > 0)
+		// Calculate the X position for the grid cell
+		float posX = -gridWidth / 2.f + i * xSpacing;
+		for (int j = 0; j < resolution; ++j)
 		{
-			Vertex avgVertex{ 0.f, 0.f, 0.f, 0.f, 0.f, 0.f };
-			avgVertex.mPosition = cell.mSumPosition / static_cast<float>(cell.mCount);
-			avgVertex.mColor = cell.mSumColor / static_cast<float>(cell.mCount);
-			reducedVertices.push_back(avgVertex);
+			// Calculate the Z position for the grid cell
+			float posZ = -gridHeight / 2.f + j * zSpacing;
+
+			// Define the bounding box for the current grid cell
+			float boxMinX = posX - halfBox;
+			float boxMaxX = posX + halfBox;
+			float boxMinZ = posZ - halfBox;
+			float boxMaxZ = posZ + halfBox;
+
+			// Determine the range of cells that intersect with the bounding box
+			int minCellX = std::clamp(static_cast<int>(std::floor(boxMinX / cellSize)), 0, cellsX - 1);
+			int maxCellX = std::clamp(static_cast<int>(std::floor(boxMaxX / cellSize)), 0, cellsX - 1);
+			int minCellZ = std::clamp(static_cast<int>(std::floor(boxMinZ / cellSize)), 0, cellsZ - 1);
+			int maxCellZ = std::clamp(static_cast<int>(std::floor(boxMaxZ / cellSize)), 0, cellsZ - 1);
+
+			// Vectors to hold Y values and color components
+			std::vector<float> yValues, rValues, gValues, bValues;
+
+			// Collect data from the intersecting cells
+			for (int cellX = minCellX; cellX <= maxCellX; ++cellX)
+			{
+				for (int cellZ = minCellZ; cellZ <= maxCellZ; ++cellZ)
+				{
+					for (const auto& dataVertex : gridVector[cellX][cellZ])
+					{
+						// Check if the vertex is within the bounding box
+						if (dataVertex.mPosition.x >= boxMinX && dataVertex.mPosition.x <= boxMaxX &&
+							dataVertex.mPosition.z >= boxMinZ && dataVertex.mPosition.z <= boxMaxZ) {
+							yValues.push_back(dataVertex.mPosition.y);
+							rValues.push_back(dataVertex.mColor.r);
+							gValues.push_back(dataVertex.mColor.g);
+							bValues.push_back(dataVertex.mColor.b);
+						}
+					}
+				}
+			}
+
+			// Calculate the average Y position
+			float avgY;
+			if (!yValues.empty())
+			{
+				avgY = std::accumulate(yValues.begin(), yValues.end(), 0.0f) / yValues.size();
+			}
+			else
+			{
+				avgY = 0.0f;
+			}
+
+			// Calculate the average color
+			glm::vec3 avgColor;
+			if (!rValues.empty())
+			{
+				avgColor = glm::vec3(
+					std::accumulate(rValues.begin(), rValues.end(), 0.0f) / rValues.size(),
+					std::accumulate(gValues.begin(), gValues.end(), 0.0f) / gValues.size(),
+					std::accumulate(bValues.begin(), bValues.end(), 0.0f) / bValues.size()
+				);
+			}
+			else
+			{
+				avgColor = glm::vec3(1.0f, 1.0f, 1.0f);
+			}
+
+			// Add the averaged vertex to the mesh
+			mVertices.emplace_back(posX, avgY, posZ, avgColor.r, avgColor.g, avgColor.b);
 		}
 	}
-
-	// Replace tempVertices with the reduced set
-	tempVertices = std::move(reducedVertices);
 }
 
-void Mesh::TriangulateVector(std::vector<Vertex>& tempVertices)
+void Mesh::TriangulateGrid(int gridWidth, int gridHeight, std::vector<Index>& indices)
 {
-    size_t numVertices = tempVertices.size();  
-    int gridWidth = static_cast<int>(std::sqrt(numVertices));  
-    int gridHeight = gridWidth;  
+	indices.clear();
 
-    if (gridWidth * gridHeight != numVertices) 
-	{  
-        std::cerr << "The number of vertices does not form a perfect square grid." << std::endl;  
-        return;  
-    }  
+	for (int i = 0; i < gridWidth - 1; ++i)
+	{
+		for (int j = 0; j < gridHeight - 1; ++j)
+		{
+			// Calculate indices for the two triangles in this grid cell
+			unsigned int index0 = i * gridHeight + j;
+			unsigned int index1 = (i + 1) * gridHeight + j;
+			unsigned int index2 = i * gridHeight + (j + 1);
+			unsigned int index3 = (i + 1) * gridHeight + (j + 1);
 
-    for (int i = 0; i < gridWidth - 1; ++i) 
-	{  
-        for (int j = 0; j < gridHeight - 1; ++j) 
-		{  
-            int index0 = i * gridHeight + j;  
-            int index1 = (i + 1) * gridHeight + j;  
-            int index2 = i * gridHeight + (j + 1);  
-            int index3 = (i + 1) * gridHeight + (j + 1);  
+			// First triangle (index0, index1, index2)
+			indices.push_back(index0);
+			indices.push_back(index1);
+			indices.push_back(index2);
 
-            mIndices.push_back(index0);  
-            mIndices.push_back(index1);  
-            mIndices.push_back(index2);  
+			// Second triangle (index1, index3, index2)
+			indices.push_back(index1);
+			indices.push_back(index3);
+			indices.push_back(index2);
+		}
+	}
+}
 
-            mIndices.push_back(index1);  
-            mIndices.push_back(index3);  
-            mIndices.push_back(index2);  
-        }  
-    }  
+void Mesh::CalculateNormals()
+{
+	// Step 1: Initialize normals to zero
+	for (auto& vertex : mVertices)
+	{
+		vertex.mNormal = glm::vec3(0.0f, 0.0f, 0.0f);
+	}
 
-	//// Finding min and max for x and y in the vector.
-	//float minXVert = tempVertices[0].mPosition.x;
-	//float maxXVert = tempVertices[0].mPosition.x;
-	//float minYVert = tempVertices[0].mPosition.y;
-	//float maxYVert = tempVertices[0].mPosition.y;
-	//float minZVert = tempVertices[0].mPosition.z;
-	//float maxZVert = tempVertices[0].mPosition.z;
+	// Step 2: Iterate over each triangle
+	for (size_t i = 0; i < mIndices.size(); i += 3)
+	{
+		unsigned int index0 = mIndices[i];
+		unsigned int index1 = mIndices[i + 1];
+		unsigned int index2 = mIndices[i + 2];
 
-	//for (const auto& vertex : tempVertices)
-	//{
-	//	minXVert = glm::min(minXVert, vertex.mPosition.x);
-	//	maxXVert = glm::max(maxXVert, vertex.mPosition.x);
-	//	minYVert = glm::min(minYVert, vertex.mPosition.y);
-	//	maxYVert = glm::max(maxYVert, vertex.mPosition.y);
-	//	minZVert = glm::min(minZVert, vertex.mPosition.z);
-	//	maxZVert = glm::max(maxZVert, vertex.mPosition.z);
-	//}
+		glm::vec3& v0 = mVertices[index0].mPosition;
+		glm::vec3& v1 = mVertices[index1].mPosition;
+		glm::vec3& v2 = mVertices[index2].mPosition;
 
-	//// Defining grid resolution
-	//int gridWidth = static_cast<int>(std::ceil((maxXVert - minXVert) / gridResolution));
-	//int gridHeight = static_cast<int>(std::ceil((maxYVert - minYVert) / gridResolution));
-	//int gridDepth = static_cast<int>(std::ceil((maxZVert - minZVert) / gridResolution));
+		// Calculate the edges of the triangle
+		glm::vec3 edge1 = v1 - v0;
+		glm::vec3 edge2 = v2 - v0;
 
-	//// Initializing the grid
-	//std::vector<std::vector<std::vector<GridCell>>> grid(gridWidth, std::vector<std::vector<GridCell>>(gridHeight, std::vector<GridCell>(gridDepth)));
-	//std::cout << "Grid Width: " << gridWidth << ", Grid Height: " << gridHeight << ", Grid Depth: " << gridDepth << "\n";
+		// Calculate the normal using the cross product
+		glm::vec3 normal = glm::cross(edge1, edge2);
 
-	//// Assigning points to the grid cells
-	//for (const auto& vertex : tempVertices) {
-	//	int gridX = static_cast<int>((vertex.mPosition.x - minXVert) / gridResolution);
-	//	int gridY = static_cast<int>((vertex.mPosition.y - minYVert) / gridResolution);
-	//	int gridZ = static_cast<int>((vertex.mPosition.z - minZVert) / gridResolution);
+		// Accumulate the normal to each vertex of the triangle
+		mVertices[index0].mNormal += normal;
+		mVertices[index1].mNormal += normal;
+		mVertices[index2].mNormal += normal;
+	}
 
-	//	grid[gridX][gridY][gridZ].mSumHeight += vertex.mPosition.z;
-	//	grid[gridX][gridY][gridZ].mCount += 1;
-	//}
-
-	//// Calculating average heights
-	//for (int i = 0; i < gridWidth; ++i)
-	//{
-	//	for (int j = 0; j < gridHeight; ++j)
-	//	{
-	//		for (int k = 0; k < gridDepth; ++k)
-	//		{
-	//			if (grid[i][j][k].mCount > 0)
-	//			{
-	//				grid[i][j][k].mSumHeight /= grid[i][j][k].mCount; // Average height
-	//			}
-	//		}
-	//	}
-	//}
-
-	//float midXPoint = (minXVert + maxXVert) / 2.f;
-	//float midYPoint = (minYVert + maxYVert) / 2.f;
-	//float midZPoint = (minZVert + maxZVert) / 2.f;
-
-	//for (auto& vertex : tempVertices)
-	//{
-	//	vertex.mPosition.x -= midXPoint;
-	//	vertex.mPosition.y -= midYPoint;
-	//	vertex.mPosition.z -= midZPoint;
-	//	mVertices.emplace_back(vertex.mPosition.x, vertex.mPosition.y, vertex.mPosition.z, vertex.mColor.r, vertex.mColor.g, vertex.mColor.b);
-	//}
+	// Step 3: Normalize the accumulated normals
+	for (auto& vertex : mVertices)
+	{
+		vertex.mNormal = glm::normalize(vertex.mNormal);
+	}
 }
 
 std::pair<glm::vec3, glm::vec3> Mesh::CalculateBoxExtent()
