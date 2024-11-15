@@ -61,7 +61,7 @@ Mesh::Mesh(MeshShape meshShape, Shader* meshShader) : mMeshShape(meshShape), mMe
 		break;
 
 	case MeshShape::PUNKTSKY:
-		CreateMeshFromPointCloud(150, true);
+		CreateMeshFromPointCloud(150, false, {0.1f, 0.1f, 0.1f});
 		break;
 
 	default:
@@ -501,7 +501,7 @@ glm::vec3 Mesh::EvaluateBSplineNormal(float u, float v, int degreeU, int degreeV
 	return glm::normalize(glm::cross(T_u, T_v));
 }
 
-void Mesh::CreateMeshFromPointCloud(int resolution, bool usingBSpling)
+void Mesh::CreateMeshFromPointCloud(int resolution, bool usingBSpling, glm::vec3 cloudScale)
 {
 	// Loading vertices from file into a temp vector
 	std::vector<Vertex> tempVertices;
@@ -536,40 +536,43 @@ void Mesh::CreateMeshFromPointCloud(int resolution, bool usingBSpling)
 
 	if (usingBSpling)
 	{
-        // Calculate grid dimensions based on resolution  
-        int gridWidth = resolution;  
-        int gridHeight = resolution;  
+		// Calculate grid dimensions based on resolution
+		int gridWidth = resolution;
+		int gridHeight = resolution;
 
-        // Calculate spacing between grid points  
-        float xSpacing = (maxVertX - minVertX) / (gridWidth - 1);  
-        float zSpacing = (maxVertZ - minVertZ) / (gridHeight - 1);  
+		// Calculate spacing between grid points
+		float xSpacing = (maxVertX - minVertX) / (gridWidth - 1);
+		float zSpacing = (maxVertZ - minVertZ) / (gridHeight - 1);
 
-        // Initialize control points grid  
-        std::vector<std::vector<Vertex>> controlPoints(gridWidth, std::vector<Vertex>(gridHeight, Vertex(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f)));  
+		// Initialize control points grid
+		std::vector<std::vector<Vertex>> controlPoints(gridWidth, std::vector<Vertex>(gridHeight, Vertex(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f)));
 
-        // Populate the control points grid  
-        for (const auto& vertex : tempVertices) {  
-            int i = static_cast<int>((vertex.mPosition.x - minVertX) / xSpacing);  
-            int j = static_cast<int>((vertex.mPosition.z - minVertZ) / zSpacing);  
+		// Populate the control points grid
+		for (const auto& vertex : tempVertices) {
+			int i = static_cast<int>((vertex.mPosition.x - minVertX) / xSpacing);
+			int j = static_cast<int>((vertex.mPosition.z - minVertZ) / zSpacing);
 
-            i = std::clamp(i, 0, gridWidth - 1);  
-            j = std::clamp(j, 0, gridHeight - 1);  
+			i = std::clamp(i, 0, gridWidth - 1);
+			j = std::clamp(j, 0, gridHeight - 1);
 
-            if (controlPoints[i][j].mPosition == glm::vec3(0.0f)) {  
-                controlPoints[i][j] = vertex;  
-            } else {  
-                controlPoints[i][j].mPosition = (controlPoints[i][j].mPosition + vertex.mPosition) / 2.0f;  
-                controlPoints[i][j].mColor = (controlPoints[i][j].mColor + vertex.mColor) / 2.0f;  
-            }  
-        }  
+			if (controlPoints[i][j].mPosition == glm::vec3(0.0f))
+			{
+				controlPoints[i][j] = vertex;
+			}
+			else
+			{
+				controlPoints[i][j].mPosition = (controlPoints[i][j].mPosition + vertex.mPosition) / 2.0f;
+				controlPoints[i][j].mColor = (controlPoints[i][j].mColor + vertex.mColor) / 2.0f;
+			}
+		}
 
-        // Generate the spline surface  
-        GenerateSplineSurface(resolution, controlPoints);  
+		// Generate the spline surface
+		GenerateSplineSurface(resolution, controlPoints);
 	}
 	else
 	{
 		// Generating and Populating the grid
-		GenerateAndPopulateGrid(resolution, tempVertices, minVertX, maxVertX, minVertZ, maxVertZ);
+		GenerateAndPopulateGrid(resolution, tempVertices, minVertX, maxVertX, minVertZ, maxVertZ, cloudScale);
 		std::cout << "Grid generated and populated\n";
 	}
 
@@ -582,7 +585,7 @@ void Mesh::CreateMeshFromPointCloud(int resolution, bool usingBSpling)
 	std::cout << "Triangulated vertices normal calculated\n";
 }
 
-void Mesh::GenerateAndPopulateGrid(int resolution, std::vector<Vertex>& tempVertices, float minVertX, float maxVertX, float minVertZ, float maxVertZ)
+void Mesh::GenerateAndPopulateGrid(int resolution, std::vector<Vertex>& tempVertices, float minVertX, float maxVertX, float minVertZ, float maxVertZ, glm::vec3 cloudScale)
 {
 	std::cout << "Starting grid calculations with resolution: " << resolution << "\n";
 	// Calculate the width and height of the grid
@@ -650,7 +653,7 @@ void Mesh::GenerateAndPopulateGrid(int resolution, std::vector<Vertex>& tempVert
 							dataVertex.mPosition.z >= boxMinZ && dataVertex.mPosition.z <= boxMaxZ) {
 							yValues.push_back(dataVertex.mPosition.y);
 							rValues.push_back(dataVertex.mColor.r);
-							gValues.push_back(dataVertex.mColor.g);	
+							gValues.push_back(dataVertex.mColor.g);
 							bValues.push_back(dataVertex.mColor.b);
 						}
 					}
@@ -684,7 +687,7 @@ void Mesh::GenerateAndPopulateGrid(int resolution, std::vector<Vertex>& tempVert
 			}
 
 			// Add the averaged vertex to the mesh
-			mVertices.emplace_back(posX, avgY, posZ, avgColor.r, avgColor.g, avgColor.b);
+			mVertices.emplace_back(posX*cloudScale.x, avgY*cloudScale.y, posZ*cloudScale.z, avgColor.r, avgColor.g, avgColor.b);
 		}
 		int percentageComplete = (i / static_cast<float>(resolution)) * 100;
 		std::cout << "Grid generation " << percentageComplete << "% complete" << "\n";
@@ -759,36 +762,36 @@ void Mesh::CalculateNormals()
 
 void Mesh::GenerateSplineSurface(int resolution, const std::vector<std::vector<Vertex>>& controlPoints)
 {
-    int gridWidth = controlPoints.size();  
-    int gridHeight = controlPoints[0].size();  
+	int gridWidth = controlPoints.size();
+	int gridHeight = controlPoints[0].size();
 
-    mVertices.clear();  
+	mVertices.clear();
 
-    // Evaluate the spline surface at each grid point  
-    for (int i = 0; i < resolution; ++i) {  
-        float u = i / static_cast<float>(resolution - 1);  
-        for (int j = 0; j < resolution; ++j) {  
-            float v = j / static_cast<float>(resolution - 1);  
+	// Evaluate the spline surface at each grid point
+	for (int i = 0; i < resolution; ++i) {
+		float u = i / static_cast<float>(resolution - 1);
+		for (int j = 0; j < resolution; ++j) {
+			float v = j / static_cast<float>(resolution - 1);
 
-            glm::vec3 position(0.0f);  
-            glm::vec3 color(0.0f);  
+			glm::vec3 position(0.0f);
+			glm::vec3 color(0.0f);
 
-            for (int du = 0; du < 3; ++du) {  
-                for (int dv = 0; dv < 3; ++dv) {  
-                    int indexU = std::clamp(i + du - 1, 0, gridWidth - 1);  
-                    int indexV = std::clamp(j + dv - 1, 0, gridHeight - 1);  
+			for (int du = 0; du < 3; ++du) {
+				for (int dv = 0; dv < 3; ++dv) {
+					int indexU = std::clamp(i + du - 1, 0, gridWidth - 1);
+					int indexV = std::clamp(j + dv - 1, 0, gridHeight - 1);
 
-                    float basisU = (du == 0) ? B0(u) : (du == 1) ? B1(u) : B2(u);  
-                    float basisV = (dv == 0) ? B0(v) : (dv == 1) ? B1(v) : B2(v);  
+					float basisU = (du == 0) ? B0(u) : (du == 1) ? B1(u) : B2(u);
+					float basisV = (dv == 0) ? B0(v) : (dv == 1) ? B1(v) : B2(v);
 
-                    position += basisU * basisV * controlPoints[indexU][indexV].mPosition;  
-                    color += basisU * basisV * glm::vec3(controlPoints[indexU][indexV].mColor);  
-                }  
-            }  
+					position += basisU * basisV * controlPoints[indexU][indexV].mPosition;
+					color += basisU * basisV * glm::vec3(controlPoints[indexU][indexV].mColor);
+				}
+			}
 
-            mVertices.emplace_back(position.x, position.y, position.z, color.r, color.g, color.b);  
-        }  
-    } 
+			mVertices.emplace_back(position.x, position.y, position.z, color.r, color.g, color.b);
+		}
+	}
 }
 
 std::pair<glm::vec3, glm::vec3> Mesh::CalculateBoxExtent()

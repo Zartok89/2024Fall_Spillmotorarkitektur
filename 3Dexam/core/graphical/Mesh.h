@@ -118,8 +118,8 @@ public:
 	/*
 	 * Point Cloud Generation and Triangulation
 	 */
-	void CreateMeshFromPointCloud(int resolution, bool usingBSpling);
-	void GenerateAndPopulateGrid(int resolution, std::vector<Vertex>& tempVertices, float minVertX, float maxVertX, float minVertZ, float maxVertZ);
+	void CreateMeshFromPointCloud(int resolution, bool usingBSpling, glm::vec3 cloudScale);
+	void GenerateAndPopulateGrid(int resolution, std::vector<Vertex>& tempVertices, float minVertX, float maxVertX, float minVertZ, float maxVertZ, glm::vec3 cloudScale);
 	void TriangulateGrid(int gridWidth, int gridHeight, std::vector<unsigned int>& indices) ;
 	void CalculateNormals();
 	void GenerateSplineSurface(int resolution, const std::vector<std::vector<Vertex>>& controlPoints);

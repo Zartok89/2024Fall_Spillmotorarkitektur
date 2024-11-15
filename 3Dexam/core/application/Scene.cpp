@@ -104,8 +104,8 @@ void Scene::LoadActors()
 {
 	//mSceneActors["CubeContainer"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 2.f, Actor::ActorType::STATIC, mShader, false, ""));
 	//mSceneActors["bSplineBasis"] = (std::make_shared<Actor>("bSplineBasisMesh", mSceneMeshes["bSplineBasisMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 3.f, Actor::ActorType::STATIC, mShader, false, ""));
-	mSceneActors["PunktSky"] = (std::make_shared<Actor>("PunktSkyMesh", mSceneMeshes["PunktSkyMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 0.1f, Actor::ActorType::STATIC, mShader, false, ""));
-	mSceneActors["Player"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ 0.f, 200.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 0.1f, Actor::ActorType::PLAYER, mShader, false, ""));
+	mSceneActors["PunktSky"] = (std::make_shared<Actor>("PunktSkyMesh", mSceneMeshes["PunktSkyMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader, false, ""));
+	mSceneActors["Player"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::PLAYER, mShader, false, ""));
 
 	//// Map Bounds
 	//mSceneActors["CubeContainer"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 50.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
@@ -173,7 +173,8 @@ void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std
 		glm::vec3 playerHeight;
 		if (BarycentricCalculations(mSceneActors["PunktSky"], actor->GetActorPosition(), playerHeight))
 		{
-			actor->SetActorPosition(playerHeight + glm::vec3{ 0.f, 10.f, 0.f });
+			actor->SetActorPosition(playerHeight);
+			std::cout << actor->GetActorPosition().x << ", " << actor->GetActorPosition().y << ", " << actor->GetActorPosition().z << "\n";
 		}
 		transform = actor->GetActorTransform();
 		mShader->setMat4("model", transform);
@@ -390,9 +391,6 @@ bool Scene::BarycentricCalculations(std::shared_ptr<Actor>& objectToCheck, glm::
 		float U = glm::cross(Q - targetPosition, R - targetPosition).z / area;
 		float V = glm::cross(R - targetPosition, P - targetPosition).z / area;
 		float W = glm::cross(P - targetPosition, Q - targetPosition).z / area;
-
-		// Debugging output
-		//std::cout << "Triangle " << i / 3 << ": U=" << U << ", V=" << V << ", W=" << W << ", Sum=" << (U + V + W) << std::endl;
 
 		// Use a small tolerance to handle floating-point precision issues
 		const float tolerance = 1e-5f;
