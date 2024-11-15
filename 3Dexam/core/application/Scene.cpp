@@ -91,7 +91,7 @@ void Scene::LoadMeshes()
 	mSceneMeshes["FlatTerrainMesh"] = std::make_shared<Mesh>(MeshShape::TERRAIN_FLAT, mShader);
 	mSceneMeshes["CurvedTerrainMesh"] = std::make_shared<Mesh>(MeshShape::TERRAIN_CURVED, mShader);
 	mSceneMeshes["bSplineBasisMesh"] = std::make_shared<Mesh>(MeshShape::BSPLINEBASIS, mShader);
-	//mSceneMeshes["PunktSkyMesh"] = std::make_shared<Mesh>(MeshShape::PUNKTSKY, mShader);
+	mSceneMeshes["PunktSkyMesh"] = std::make_shared<Mesh>(MeshShape::PUNKTSKY, mShader);
 }
 
 //void Scene::LoadMaterials()
@@ -102,9 +102,10 @@ void Scene::LoadMeshes()
 // Actor loading, adding them into a vector of actors
 void Scene::LoadActors()
 {
-	mSceneActors["CubeContainer"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 2.f, Actor::ActorType::STATIC, mShader, false, ""));
+	//mSceneActors["CubeContainer"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 2.f, Actor::ActorType::STATIC, mShader, false, ""));
 	//mSceneActors["bSplineBasis"] = (std::make_shared<Actor>("bSplineBasisMesh", mSceneMeshes["bSplineBasisMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 3.f, Actor::ActorType::STATIC, mShader, false, ""));
-	//mSceneActors["PunktSky"] = (std::make_shared<Actor>("PunktSkyMesh", mSceneMeshes["PunktSkyMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, /*270.f*/ 0.1f, Actor::ActorType::STATIC, mShader, false, ""));
+	mSceneActors["PunktSky"] = (std::make_shared<Actor>("PunktSkyMesh", mSceneMeshes["PunktSkyMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 0.1f, Actor::ActorType::STATIC, mShader, false, ""));
+	mSceneActors["Player"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ 0.f, 200.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 0.1f, Actor::ActorType::PLAYER, mShader, false, ""));
 
 	//// Map Bounds
 	//mSceneActors["CubeContainer"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 50.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
@@ -170,9 +171,9 @@ void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std
 
 	case Actor::PLAYER:
 		glm::vec3 playerHeight;
-		if (BarycentricCalculations(mSceneActors["Terrain"], actor->GetActorPosition(), playerHeight))
+		if (BarycentricCalculations(mSceneActors["PunktSky"], actor->GetActorPosition(), playerHeight))
 		{
-			actor->SetActorPosition(playerHeight);
+			actor->SetActorPosition(playerHeight + glm::vec3{ 0.f, 10.f, 0.f });
 		}
 		transform = actor->GetActorTransform();
 		mShader->setMat4("model", transform);
@@ -197,8 +198,6 @@ void Scene::HandleSceneCollision(float deltaTime)
 			glm::vec3 positionChange = ball->GetActorVelocity() * deltaTime;
 			ball->SetActorPosition(ball->GetActorPosition() + positionChange);
 		}
-
-		//PopulateOctree();
 
 		std::vector<CollisionInfo> collisions = DetectAllCollisions();
 
@@ -373,29 +372,42 @@ void Scene::ResolveCollision(const CollisionInfo& collision)
 bool Scene::BarycentricCalculations(std::shared_ptr<Actor>& objectToCheck, glm::vec3 targetedPos, glm::vec3& newPositionVector)
 {
 	glm::vec3 targetPosition = glm::vec3(targetedPos.x, targetedPos.z, 0);
-	for (int i = 0; i < objectToCheck->mMeshInfo->mIndices.size(); i += 3)
+
+	for (size_t i = 0; i < objectToCheck->mMeshInfo->mIndices.size(); i += 3)
 	{
-		unsigned int P1{ objectToCheck->mMeshInfo->mIndices[i] };
-		unsigned int P2{ objectToCheck->mMeshInfo->mIndices[i + 1] };
-		unsigned int P3{ objectToCheck->mMeshInfo->mIndices[i + 2] };
+		int P1 = objectToCheck->mMeshInfo->mIndices[i];
+		int P2 = objectToCheck->mMeshInfo->mIndices[i + 1];
+		int P3 = objectToCheck->mMeshInfo->mIndices[i + 2];
 
 		glm::vec3 P = glm::vec3(objectToCheck->mMeshInfo->mVertices[P1].mPosition.x, objectToCheck->mMeshInfo->mVertices[P1].mPosition.z, 0.f);
 		glm::vec3 Q = glm::vec3(objectToCheck->mMeshInfo->mVertices[P2].mPosition.x, objectToCheck->mMeshInfo->mVertices[P2].mPosition.z, 0.f);
 		glm::vec3 R = glm::vec3(objectToCheck->mMeshInfo->mVertices[P3].mPosition.x, objectToCheck->mMeshInfo->mVertices[P3].mPosition.z, 0.f);
 
-		float areal = glm::length(glm::cross(Q - P, R - P));
+		glm::vec3 PQ = Q - P;
+		glm::vec3 PR = R - P;
+		float area = glm::length(glm::cross(PQ, PR));
 
-		float U = (glm::cross(Q - targetPosition, R - targetPosition).z) / areal;
-		float V = (glm::cross(R - targetPosition, P - targetPosition).z) / areal;
-		float W = (glm::cross(P - targetPosition, Q - targetPosition).z) / areal;
+		float U = glm::cross(Q - targetPosition, R - targetPosition).z / area;
+		float V = glm::cross(R - targetPosition, P - targetPosition).z / area;
+		float W = glm::cross(P - targetPosition, Q - targetPosition).z / area;
 
-		if (U >= 0 && V >= 0 && W >= 0)
+		// Debugging output
+		//std::cout << "Triangle " << i / 3 << ": U=" << U << ", V=" << V << ", W=" << W << ", Sum=" << (U + V + W) << std::endl;
+
+		// Use a small tolerance to handle floating-point precision issues
+		const float tolerance = 1e-5f;
+		if (U >= -tolerance && V >= -tolerance && W >= -tolerance && std::abs(U + V + W - 1.0f) <= tolerance)
 		{
-			newPositionVector = U * objectToCheck->mMeshInfo->mVertices[P1].mPosition + V * objectToCheck->mMeshInfo->mVertices[P2].mPosition + W * objectToCheck->mMeshInfo->mVertices[P3].mPosition;
+			// Calculate the new Y position using barycentric coordinates
+			float newY = U * objectToCheck->mMeshInfo->mVertices[P1].mPosition.y +
+				V * objectToCheck->mMeshInfo->mVertices[P2].mPosition.y +
+				W * objectToCheck->mMeshInfo->mVertices[P3].mPosition.y;
+
+			// Set the new position with the correct Y value
+			newPositionVector = glm::vec3(targetedPos.x, newY, targetedPos.z);
 			return true;
 		}
 	}
-
 	return false;
 }
 

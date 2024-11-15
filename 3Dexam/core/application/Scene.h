@@ -69,7 +69,7 @@ public:
 	float mNpcSpeed{ 5.f };
 	double previousTime = glfwGetTime();
 	bool hasSetNewLine{ false };
-	bool shouldRenderWireframe{ true };
+	bool shouldRenderWireframe{ false };
 
 	// CubeExtent & Octree
 	void PopulateOctree();

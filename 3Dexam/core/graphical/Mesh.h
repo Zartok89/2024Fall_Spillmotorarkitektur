@@ -118,10 +118,11 @@ public:
 	/*
 	 * Point Cloud Generation and Triangulation
 	 */
-	void CreateMeshFromPointCloud(int resolution);
+	void CreateMeshFromPointCloud(int resolution, bool usingBSpling);
 	void GenerateAndPopulateGrid(int resolution, std::vector<Vertex>& tempVertices, float minVertX, float maxVertX, float minVertZ, float maxVertZ);
 	void TriangulateGrid(int gridWidth, int gridHeight, std::vector<unsigned int>& indices) ;
 	void CalculateNormals();
+	void GenerateSplineSurface(int resolution, const std::vector<std::vector<Vertex>>& controlPoints);
 
 	/*
 	* Mesh Utility
@@ -152,6 +153,9 @@ public:
 	// Degrees
 	int Du = 2;
 	int Dv = 2;
+	float B0(float t) { return 0.5f * (1 - t) * (1 - t); }
+	float B1(float t) { return 0.5f + t * (1 - t); }
+	float B2(float t) { return 0.5f * t * t; }
 
 	// Resolution
 	int UResolution = 20;

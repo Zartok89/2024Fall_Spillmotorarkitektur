@@ -142,9 +142,9 @@ void ReadWriteFiles::FromDataToVertexVector(std::string DataFileToVertexVector, 
 			while (iss >> Number)
 			{
 				currentLine ++;
-				if (currentLine % 100000 == 0)
+				if (currentLine % 500000 == 0)
 				{
-					std::cout << currentLine << "\n";
+					std::cout << "Current line: " << currentLine << "\n";
 				}
 				floats.push_back(Number);
 			}
@@ -157,9 +157,6 @@ void ReadWriteFiles::FromDataToVertexVector(std::string DataFileToVertexVector, 
 				float TempR = floats[3];
 				float TempG = floats[4];
 				float TempB = floats[5];
-				//float TempR = 0.f;
-				//float TempG = 1.f;
-				//float TempB = 0.f;
 				VerticesVector.emplace_back(Vertex{ TempX, TempZ, TempY, TempR, TempG, TempB });
 			}
 
@@ -182,8 +179,8 @@ void ReadWriteFiles::FromDataToVertexVector(std::string DataFileToVertexVector, 
 			//float TempN3 = floats[8];
 			//VerticesVector.emplace_back(Vertex{ glm::vec3{TempX, TempY, TempZ}, glm::vec3{TempR, TempG, TempB}, glm::vec3{TempN1, TempN2,TempN3}});
 		}
-
-		std::cout << "Amount of Vertexes added to the vector: " << VerticesVector.size() << std::endl;
+		std::cout << "Finished reading lines" << "\n";
+		std::cout << "Amount of Vertexes added to the vector: " << "\n";
 		MyFile.close();
 	}
 	else
