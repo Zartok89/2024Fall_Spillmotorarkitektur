@@ -79,7 +79,6 @@ public:
 	static void SetupAttributes();
 };
 
-
 class Mesh
 {
 public:
@@ -108,19 +107,11 @@ public:
 	void GenerateCurvedTerrain(float planeWidth, float planeDepth, int divisionsWidth, int divisionsDepth);
 
 	/*
-	 * BSplines
-	 */
-	void CreateBSplineSurface(int uResolution, int vResolution, int degreeU, int degreeV, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints, const std::string& customName);
-	void GenerateIndicesForBSplines(int uResolution, int vResolution);
-	glm::vec3 EvaluateBSplineSurface(float u, float v, int degreeU, int degreeV, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints);
-	glm::vec3 EvaluateBSplineNormal(float u, float v, int degreeU, int degreeV, double invUResolution, double invVResolution, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints);
-
-	/*
 	 * Point Cloud Generation and Triangulation
 	 */
 	void CreateMeshFromPointCloud(int resolution, bool usingBSpling, glm::vec3 cloudScale);
 	void GenerateAndPopulateGrid(int resolution, std::vector<Vertex>& tempVertices, float minVertX, float maxVertX, float minVertZ, float maxVertZ, glm::vec3 cloudScale);
-	void TriangulateGrid(int gridWidth, int gridHeight, std::vector<unsigned int>& indices) ;
+	void TriangulateGrid(int gridWidth, int gridHeight, std::vector<unsigned int>& indices);
 	void CalculateNormals();
 	void GenerateSplineSurface(int resolution, const std::vector<std::vector<Vertex>>& controlPoints);
 
@@ -134,49 +125,34 @@ public:
 	/*
 	 * Member Variables
 	 */
+	/*Bindings*/
 	VAO mVAO{ 0 };
 	VBO mVBO{ 0 };
 	EBO mEBO{ 0 };
-	// Mesh information
+
+	/*Mesh information*/
 	std::vector<Vertex> mVertices{};
 	std::vector<Index> mIndices{};
 	MeshShape mMeshShape;
 	Shader* mMeshShader;
-	// Terrain settings
+
+	/*Terrain settings*/
 	float mTerrainWidth{ 80.f };
 	float mTerrainDepth{ 40.f };
 	float mTerrainDivisionsWidth{ 40.f };
 	float mTerrainDivisionsDepth{ 20.f };
 	bool setWireframe{ false };
 
-	/* BiQuadratic Spline Variables*/
-	// Degrees
-	int Du = 2;
-	int Dv = 2;
+	/*BiQuadratic Spline Variables*/
 	float B0(float t) { return 0.5f * (1 - t) * (1 - t); }
 	float B1(float t) { return 0.5f + t * (1 - t); }
 	float B2(float t) { return 0.5f * t * t; }
 
-	// Resolution
-	int UResolution = 20;
-	int VResolution = 20;
-
-	// Knot Vectors
-	std::vector<float> uKnot = { 0.0,0.0,0.0,1.0,2.0,2.0,2.0 };
-	std::vector<float> vKnot = { 0.0,0.0,0.0,1.0,2.0,2.0,2.0 };
-
-	// Control Points
-	std::vector<std::vector<glm::vec3>> controlPoints = {
-	{glm::vec3(0.0f,0.0f,0.0f), glm::vec3(1.0f,1.0f,0.0f), glm::vec3(2.0f,0.0f,0.0f)},
-	{glm::vec3(0.0f,1.0f,1.0f), glm::vec3(1.0f,2.0f,1.0f), glm::vec3(2.0f,1.0f,1.0f)},
-	{glm::vec3(0.0f,0.0f,2.0f), glm::vec3(1.0f,1.0f,2.0f), glm::vec3(2.0f,0.0f,2.0f)}
-	};
-
-	// Light properties
+	/*Light properties*/
 	glm::vec3 lightPos{ 1.2f, 1.0f, 2.0f };
 	glm::vec3 lightColor{ 1.0f, 1.0f, 1.0f }; // White light
 
-	// Material properties
+	/*Material properties*/
 	glm::vec3 objectColor{ 1.0f, 0.0f, 0.2f }; // Example object color
 	float ambientStrength = 1.f;
 	float specularStrength = 0.5f;

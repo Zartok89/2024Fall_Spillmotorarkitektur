@@ -52,14 +52,6 @@ Mesh::Mesh(MeshShape meshShape, Shader* meshShader) : mMeshShape(meshShape), mMe
 		GenerateCurvedTerrain(mTerrainWidth, mTerrainDepth, mTerrainDivisionsWidth, mTerrainDivisionsDepth);
 		break;
 
-	case MeshShape::BSPLINEBASIS:
-		CreateBSplineSurface(UResolution, VResolution, Du, Dv, uKnot, vKnot, controlPoints, "BSpline");
-		break;
-
-	case MeshShape::BSPLINEBIQUADRIC:
-		CreateBSplineSurface(UResolution, VResolution, Du, Dv, uKnot, vKnot, controlPoints, "BSpline");
-		break;
-
 	case MeshShape::PUNKTSKY:
 		CreateMeshFromPointCloud(150, false, {0.1f, 0.1f, 0.1f});
 		break;
@@ -85,7 +77,7 @@ void Mesh::RenderMesh()
 
 	// If the mesh is a line or a point, it will only use the vertices array, else draw with indices
 	glBindVertexArray(mVAO);
-	//if (mMeshShape == MeshShape::LINE || mMeshShape == MeshShape::LINECURVE /*|| mMeshShape == MeshShape::BSPLINEBASIS || mMeshShape == MeshShape::BSPLINEBIQUADRIC*/)
+	//if (mMeshShape == MeshShape::LINE || mMeshShape == MeshShape::LINECURVE)
 	//{
 	//	//glLineWidth(8.f);
 	//	glDrawArrays(GL_LINE_STRIP, 0, mVertices.size());
@@ -430,75 +422,6 @@ void Mesh::GenerateCurvedTerrain(float planeWidth, float planeDepth, int divisio
 			mIndices.push_back(nextRowStart + width + 1);
 		}
 	}
-}
-
-void Mesh::CreateBSplineSurface(int uResolution, int vResolution, int degreeU, int degreeV, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints, const std::string& customName)
-{
-	std::string surfaceKey = customName.empty() ? "DefaultSurface" : customName;
-	double invUResolution = 1.0 / (uResolution - 1);
-	double invVResolution = 1.0 / (vResolution - 1);
-
-	for (int i = 0; i < uResolution; ++i)
-	{
-		double u = i * invUResolution;
-		for (int j = 0; j < vResolution; ++j)
-		{
-			double v = j * invVResolution;
-			glm::vec3 surfacePoint = EvaluateBSplineSurface(u, v, degreeU, degreeV, uKnot, vKnot, controlPoints);
-			glm::vec3 surfaceNormal = EvaluateBSplineNormal(u, v, degreeU, degreeV, invUResolution, invVResolution, uKnot, vKnot, controlPoints);
-			glm::vec2 texCoords(static_cast<float>(u), static_cast<float>(v));
-			mVertices.emplace_back(surfacePoint, surfaceNormal, texCoords);
-		}
-	}
-
-	GenerateIndicesForBSplines(uResolution, vResolution);
-}
-
-void Mesh::GenerateIndicesForBSplines(int uResolution, int vResolution)
-{
-	for (int i = 0; i < uResolution - 1; ++i)
-	{
-		for (int j = 0; j < vResolution - 1; ++j)
-		{
-			unsigned int topLeft = i * vResolution + j;
-			unsigned int topRight = topLeft + 1;
-			unsigned int bottomLeft = (i + 1) * vResolution + j;
-			unsigned int bottomRight = bottomLeft + 1;
-			mIndices.insert(mIndices.end(), { topLeft, bottomLeft, topRight, topRight, bottomLeft, bottomRight });
-		}
-	}
-}
-
-glm::vec3 Mesh::EvaluateBSplineSurface(float u, float v, int degreeU, int degreeV, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints)
-{
-	glm::vec3 surfacePoint(0.0f);
-	int numControlPointsU = controlPoints.size() - 1;
-	int numControlPointsV = controlPoints[0].size() - 1;
-
-	for (int i = 0; i <= numControlPointsU; ++i) {
-		float uBasis = deBoorsAlgorithm::CoxDeBoorRecursive(i, degreeU, u, uKnot);
-		for (int j = 0; j <= numControlPointsV; ++j) {
-			float vBasis = deBoorsAlgorithm::CoxDeBoorRecursive(j, degreeV, v, vKnot);
-			surfacePoint += uBasis * vBasis * controlPoints[i][j];
-		}
-	}
-
-	return surfacePoint;
-}
-
-glm::vec3 Mesh::EvaluateBSplineNormal(float u, float v, int degreeU, int degreeV, double invUResolution, double invVResolution, const std::vector<float>& uKnot, const std::vector<float>& vKnot, const std::vector<std::vector<glm::vec3>>& controlPoints)
-{
-	float deltaU = static_cast<float>(invUResolution);
-	float deltaV = static_cast<float>(invVResolution);
-
-	glm::vec3 P = EvaluateBSplineSurface(u, v, degreeU, degreeV, uKnot, vKnot, controlPoints);
-	glm::vec3 P_u = EvaluateBSplineSurface(u + deltaU, v, degreeU, degreeV, uKnot, vKnot, controlPoints);
-	glm::vec3 P_v = EvaluateBSplineSurface(u, v + deltaV, degreeU, degreeV, uKnot, vKnot, controlPoints);
-
-	glm::vec3 T_u = P_u - P;
-	glm::vec3 T_v = P_v - P;
-
-	return glm::normalize(glm::cross(T_u, T_v));
 }
 
 void Mesh::CreateMeshFromPointCloud(int resolution, bool usingBSpling, glm::vec3 cloudScale)

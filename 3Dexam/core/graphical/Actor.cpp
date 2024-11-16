@@ -84,6 +84,8 @@ void Actor::SetRandomActorVelocity()
 
 	mActorVelocity = randomDirection * mActorSpeed;
 }
+
+
 //
 //// Constructor of an actor
 //Actor::Actor(const std::string& meshName, std::shared_ptr<Mesh> meshInfo, glm::vec3 position,
