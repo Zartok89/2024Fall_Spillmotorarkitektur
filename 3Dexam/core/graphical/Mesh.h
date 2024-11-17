@@ -25,6 +25,23 @@ enum MeshShape
 	PUNKTSKY
 };
 
+class CustomArea
+{
+public:
+	glm::vec3 minBounds{ 0.f, 0.f, 0.f };
+	glm::vec3 maxBounds{ 0.f, 0.f, 0.f };
+	glm::vec3 color{ 0.f, 1.f, 0.f };
+	float areaFriction;
+
+	CustomArea(glm::vec3 minimumBounds, glm::vec3 maximumBounds, glm::vec3 boundsColor, float _areaFriction)
+	{
+		minBounds = minimumBounds;
+		maxBounds = maximumBounds;
+		color = boundsColor;
+		areaFriction = _areaFriction;
+	}
+};
+
 class Vertex
 {
 public:
@@ -125,7 +142,7 @@ public:
 	/*
 	 * Member Variables
 	 */
-	/*Bindings*/
+	 /*Bindings*/
 	VAO mVAO{ 0 };
 	VBO mVBO{ 0 };
 	EBO mEBO{ 0 };
@@ -144,6 +161,8 @@ public:
 	bool setWireframe{ false };
 	glm::vec3 minTerrainLimit{ 0.f, 0.f, 0.f, };
 	glm::vec3 maxTerrainLimit{ 0.f, 0.f, 0.f, };
+	std::vector<CustomArea> customArea;
+	//float terrainFriction{0.f};
 
 	/*BiQuadratic Spline Variables*/
 	float B0(float t) { return 0.5f * (1 - t) * (1 - t); }

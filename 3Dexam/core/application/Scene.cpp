@@ -126,6 +126,7 @@ void Scene::LoadActors()
 	mSceneActors["PunktSky"] = (std::make_shared<Actor>("PunktSkyMesh", mSceneMeshes["PunktSkyMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader, false, ""));
 	minTerrainLimit = mSceneActors["PunktSky"]->mMeshInfo->minTerrainLimit;
 	maxTerrainLimit = mSceneActors["PunktSky"]->mMeshInfo->maxTerrainLimit;
+	CustomArea = mSceneActors["PunktSky"]->mMeshInfo->customArea;
 
 	/*Objects*/
 	//mSceneActors["Player"] = (std::make_shared<Actor>("SphereMesh", mSceneMeshes["SphereMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::DYNAMICOBJECT, mShader, true, "BlueTexture"));
@@ -416,6 +417,49 @@ bool Scene::BarycentricCalculations(std::shared_ptr<Actor>& objectToCheck, glm::
 	return false;
 }
 
+void Scene::FrictionUpdate(std::shared_ptr<Actor>& objectToUpdate, float deltaTime, const glm::vec3& normal)
+{
+	// Static and kinetic friction coefficients
+	const float mu_s = 0.5f;
+	const float mu_k = 0.3f;
+
+	// Get the current velocity and mass of the object
+	glm::vec3 velocity = objectToUpdate->GetActorVelocity();
+	float mass = objectToUpdate->GetActorMass();
+
+	// Calculate the gravitational force
+	const float g = 0.981f * 2.f;
+	glm::vec3 gravity(0.0f, -mass * g, 0.0f);
+
+	// Calculate the normal force
+	glm::vec3 normalizedNormal = glm::normalize(normal);
+	float normalForceMagnitude = glm::dot(gravity, normalizedNormal);
+	glm::vec3 normalForce = normalForceMagnitude * normalizedNormal;
+
+	// Calculate the friction force
+	glm::vec3 frictionForce;
+	if (glm::length(velocity) == 0.0f)
+	{
+		// Static friction
+		frictionForce = mu_s * normalForce;
+	}
+	else
+	{
+		// Kinetic friction
+		glm::vec3 frictionDirection = -glm::normalize(velocity);
+		frictionForce = mu_k * normalForceMagnitude * frictionDirection;
+	}
+
+	// Update the velocity based on the friction force
+	glm::vec3 accelerationDueToFriction = frictionForce / mass;
+	glm::vec3 updatedVelocity = velocity + accelerationDueToFriction * deltaTime;
+
+	// Store the updated velocity back in the object
+	objectToUpdate->SetActorVelocity(updatedVelocity);
+
+	std::cout << "Updated velocity with friction: " << updatedVelocity.x << ", " << updatedVelocity.y << ", " << updatedVelocity.z << "\n";
+}
+
 glm::vec3 Scene::CalculateReflection(const glm::vec3& velocity, const glm::vec3& normal)
 {
 	glm::vec3 normalizedNormal = glm::normalize(normal);
@@ -463,6 +507,14 @@ void Scene::ObjectPhysics(std::shared_ptr<Actor>& objectToUpdate, float deltaTim
 
 	objectToUpdate->SetActorPosition({ newPosition.x, position.y, newPosition.z });
 
+	// Updating the velocity based on friction if object is within custom area bounds
+	if (newPosition.x < CustomArea[0].maxBounds.x && newPosition.x > CustomArea[0].minBounds.x &&
+		newPosition.z < CustomArea[0].maxBounds.z && newPosition.z > CustomArea[0].minBounds.z)
+	{
+		std::cout << "INSIDE\n";
+		FrictionUpdate(objectToUpdate, deltaTime, normal);
+	}
+
 	//std::cout << "Updated position: " << newPosition.x << ", " << newPosition.y << ", " << newPosition.z << "\n";
 }
 
@@ -475,7 +527,7 @@ glm::vec3 Scene::CalculateAccelerationVector(glm::vec3& normal)
 	const float g = 0.981f;
 
 	// Calculate the acceleration vector using the given formula
-	glm::vec3 gravity(0.0f, g, 0.0f); // Gravity acts downwards in the y direction
+	glm::vec3 gravity(0.0f, g * 2, 0.0f); // Gravity acts downwards in the y direction
 	glm::vec3 accelerationVector = glm::dot(gravity, normalizedNormal) * normalizedNormal;
 
 	return accelerationVector;

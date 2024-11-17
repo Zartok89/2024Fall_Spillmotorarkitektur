@@ -554,6 +554,9 @@ void Mesh::GenerateAndPopulateGrid(int resolution, std::vector<Vertex>& tempVert
 	}
 	std::cout << "Grid populated\n";
 
+	// Custom area for friction
+	customArea.emplace_back(glm::vec3{-40.0f, 0.0f, 0.0f}, glm::vec3{-30.0f, 0.0f, 10.0f}, glm::vec3{0.0f, 0.0f, 1.0f}, 0.5f);
+
 	// Iterate over the grid to calculate average positions and colors
 	for (int i = 0; i < resolution; ++i)
 	{
@@ -623,6 +626,17 @@ void Mesh::GenerateAndPopulateGrid(int resolution, std::vector<Vertex>& tempVert
 			{
 				avgColor = glm::vec3(1.0f, 1.0f, 1.0f);
 			}
+
+			// Check if the current position is within the custom area
+            for (const auto& area : customArea)
+            {
+                if (posX >= area.minBounds.x && posX <= area.maxBounds.x &&
+                    posZ >= area.minBounds.z && posZ <= area.maxBounds.z)
+                {
+                    avgColor = area.color;
+					//terrainFriction = area.areaFriction;
+                }
+            }
 
 			// Add the averaged vertex to the mesh
 			mVertices.emplace_back(posX*cloudScale.x, avgY*cloudScale.y, posZ*cloudScale.z, avgColor.r, avgColor.g, avgColor.b);
