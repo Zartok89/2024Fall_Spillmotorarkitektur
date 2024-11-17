@@ -419,43 +419,32 @@ bool Scene::BarycentricCalculations(std::shared_ptr<Actor>& objectToCheck, glm::
 
 void Scene::FrictionUpdate(std::shared_ptr<Actor>& objectToUpdate, float deltaTime, const glm::vec3& normal)
 {
-	// Static and kinetic friction coefficients
-	const float mu_s = 0.5f;
-	const float mu_k = 0.3f;
+	// Friction coefficients
+	const float mu = CustomArea[0].areaFriction;
 
-	// Get the current velocity and mass of the object
+	// Get porperties of the current object
 	glm::vec3 velocity = objectToUpdate->GetActorVelocity();
 	float mass = objectToUpdate->GetActorMass();
 
-	// Calculate the gravitational force
-	const float g = 0.981f * 2.f;
+	// Setting gravity
+	const float g = 0.981f * 3.f;
 	glm::vec3 gravity(0.0f, -mass * g, 0.0f);
 
 	// Calculate the normal force
 	glm::vec3 normalizedNormal = glm::normalize(normal);
 	float normalForceMagnitude = glm::dot(gravity, normalizedNormal);
-	glm::vec3 normalForce = normalForceMagnitude * normalizedNormal;
 
 	// Calculate the friction force
 	glm::vec3 frictionForce;
-	if (glm::length(velocity) == 0.0f)
-	{
-		// Static friction
-		frictionForce = mu_s * normalForce;
-	}
-	else
-	{
-		// Kinetic friction
-		glm::vec3 frictionDirection = -glm::normalize(velocity);
-		frictionForce = mu_k * normalForceMagnitude * frictionDirection;
-	}
+	glm::vec3 frictionDirection = -glm::normalize(velocity);
+	frictionForce = mu * normalForceMagnitude * frictionDirection;
 
 	// Update the velocity based on the friction force
 	glm::vec3 accelerationDueToFriction = frictionForce / mass;
 	glm::vec3 updatedVelocity = velocity + accelerationDueToFriction * deltaTime;
 
 	// Store the updated velocity back in the object
-	objectToUpdate->SetActorVelocity(updatedVelocity);
+	objectToUpdate->SetActorVelocity({updatedVelocity.x, -updatedVelocity.y, updatedVelocity.z});
 
 	std::cout << "Updated velocity with friction: " << updatedVelocity.x << ", " << updatedVelocity.y << ", " << updatedVelocity.z << "\n";
 }
@@ -511,7 +500,6 @@ void Scene::ObjectPhysics(std::shared_ptr<Actor>& objectToUpdate, float deltaTim
 	if (newPosition.x < CustomArea[0].maxBounds.x && newPosition.x > CustomArea[0].minBounds.x &&
 		newPosition.z < CustomArea[0].maxBounds.z && newPosition.z > CustomArea[0].minBounds.z)
 	{
-		std::cout << "INSIDE\n";
 		FrictionUpdate(objectToUpdate, deltaTime, normal);
 	}
 

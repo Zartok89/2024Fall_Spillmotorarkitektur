@@ -17,6 +17,7 @@ Actor::Actor(const std::string& meshName, std::shared_ptr<Mesh> meshInfo, glm::v
 	mActorType(actorType)
 
 {
+	mActorMass = 1.f;
 	ActorTransform();
 
 	//if (actorType == ActorType::BALL || actorType == ActorType::STATIC)
@@ -84,7 +85,6 @@ void Actor::SetRandomActorVelocity()
 
 	mActorVelocity = randomDirection * mActorSpeed;
 }
-
 
 //
 //// Constructor of an actor
