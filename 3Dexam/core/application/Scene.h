@@ -80,23 +80,11 @@ public:
 	bool hasSetNewLine{ false };
 	bool shouldRenderWireframe{ false };
 
-	/*CubeExtent & Octree*/
-	void PopulateOctree();
-	glm::vec3 minCubeExtent;
-	glm::vec3 maxCubeExtent;
-	int octreeCapacity = 8;
-
 	/*Terrain Variables*/
 	glm::vec3 minTerrainLimit{ 0.f, 0.f, 0.f, };
 	glm::vec3 maxTerrainLimit{ 0.f, 0.f, 0.f, };
 	int objectsSpawned{0};
 	std::vector<CustomArea> CustomArea;
-
-	/*NPC Varibles*/
-	int currentVertexIndex;
-	bool movingForward;
-	float interpolateFactor;
-	float npcMovementSpeed;
 
 	/*Physics Variables*/
 	bool shouldSimualtePhysics{ false };
