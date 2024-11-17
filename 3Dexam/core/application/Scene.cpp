@@ -6,57 +6,72 @@
 #include "Scene.h"
 #include "graphical/Material.h"
 
-Scene::Scene() = default;
-
+Scene::Scene()
+{
+	previousTime = std::chrono::high_resolution_clock::now();
+}
 // Rendringering all the actors that should be contained in the scene, setting its texture and mesh
 // **running in the "while loop" of main()**
 void Scene::RenderScene()
 {
-	double currentTime = glfwGetTime();
-	float deltaTime = (float)(currentTime - previousTime);
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<float> elapsedTime = currentTime - previousTime;
+	deltaTime = elapsedTime.count();
 	previousTime = currentTime;
+
+	// Clamp delta time to a maximum value
+	const float maxDeltaTime = 0.1f;
+	if (deltaTime > maxDeltaTime) {
+		deltaTime = maxDeltaTime;
+	}
+
+	Update(deltaTime);
+
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	for (auto& actors : mSceneActors)
 	{
 		mSceneMeshes[actors.second->mName]->mMeshShader->use();
 
-		// Checking if the actors is to be using texture or colors
 		if (actors.second->mUseTexture == true)
 		{
 			mSceneTextures[actors.second->mTexture]->BindTextures();
 		}
 		mShader->setBool("useTexture", actors.second->mUseTexture);
 
-		// Running the scene logic
 		ActorSceneLogic(deltaTime, actors);
 
-		// Using materials
-		//actors.second->mMaterial->MaterialSetup(mShader);
-
-		// If it should render with wireframe mode on or off
 		shouldRenderWireframe ? mSceneMeshes[actors.second->mName]->setWireframe = true : mSceneMeshes[actors.second->mName]->setWireframe = false;
 
-		// Rendering the meshes
 		mSceneMeshes[actors.second->mName]->RenderMesh();
 	}
 
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	//for (auto& actors : mSceneBallActors)
-	//{
-	//	// Checking if the actors is to be using texture or colors
-	//	if (actors.second->mUseTexture == true)
-	//	{
-	//		mSceneTextures[actors.second->mTexture]->BindTextures();
-	//	}
-	//	mShader->setBool("useTexture", actors.second->mUseTexture);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	for (auto& actors : mSceneBallActors)
+	{
+		if (actors.second->mUseTexture == true)
+		{
+			mSceneTextures[actors.second->mTexture]->BindTextures();
+		}
+		mShader->setBool("useTexture", actors.second->mUseTexture);
 
-	//	// Running the scene logic
-	//	ActorSceneLogic(deltaTime, actors);
+		ActorSceneLogic(deltaTime, actors);
 
-	//	// Rendering the meshes
-	//	mSceneMeshes[actors.second->mName]->RenderMesh();
-	//}
+		mSceneMeshes[actors.second->mName]->RenderMesh();
+	}
 	//HandleSceneCollision(deltaTime);
+}
+
+void Scene::Update(float deltaTime)
+{
+	for (auto& actors : mSceneActors)
+	{
+		ActorSceneLogic(deltaTime, actors);
+	}
+
+	for (auto& actors : mSceneBallActors)
+	{
+		ActorSceneLogic(deltaTime, actors);
+	}
 }
 
 // Loading all the textures, meshes and actors to be ready for rendering
@@ -90,7 +105,6 @@ void Scene::LoadMeshes()
 	mSceneMeshes["SphereMesh"] = std::make_shared<Mesh>(MeshShape::SPHERE, mShader);
 	mSceneMeshes["FlatTerrainMesh"] = std::make_shared<Mesh>(MeshShape::TERRAIN_FLAT, mShader);
 	mSceneMeshes["CurvedTerrainMesh"] = std::make_shared<Mesh>(MeshShape::TERRAIN_CURVED, mShader);
-	mSceneMeshes["bSplineBasisMesh"] = std::make_shared<Mesh>(MeshShape::BSPLINEBASIS, mShader);
 	mSceneMeshes["PunktSkyMesh"] = std::make_shared<Mesh>(MeshShape::PUNKTSKY, mShader);
 }
 
@@ -114,13 +128,14 @@ void Scene::LoadActors()
 	//minCubeExtent = mapBounds->mBoxExtendMin * mapBounds->GetActorScale();
 	//maxCubeExtent = mapBounds->mBoxExtendMax * mapBounds->GetActorScale();
 
-	//int AmountOfBalls = 100;
+	//int AmountOfBalls = 1;
 	//glm::vec3 tempVec = glm::vec3{ 0.f, 0.f, 0.f };
 	//for (int i = 0; i <= AmountOfBalls; i++)
 	//{
-	//	mSceneBallActors["SphereObject " + std::to_string(i)] = (std::make_shared<Actor>("SphereMesh", mSceneMeshes["SphereMesh"], tempVec, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, .1f, Actor::ActorType::BALL, mShader, "BlueTexture"));
-	//	tempVec = RandomNumberGenerator->GeneratorRandomVector(0, 25);
-	//	OctreePtr->Insert(mSceneBallActors["SphereObject " + std::to_string(i)]);
+	//	mSceneBallActors["SphereObject " + std::to_string(i)] = (std::make_shared<Actor>("SphereMesh", mSceneMeshes["SphereMesh"], tempVec, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::BALL, mShader, true, "BlueTexture"));
+	//	mSceneBallActors["SphereObject " + std::to_string(i)]->SetActorVelocity({0.5f, 0.f, 0.f});
+	//	//tempVec = RandomNumberGenerator->GeneratorRandomVector(0, 25);
+	//	//OctreePtr->Insert(mSceneBallActors["SphereObject " + std::to_string(i)]);
 	//}
 }
 
@@ -137,43 +152,20 @@ void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std
 	auto& actor = actorEntry.second;
 	glm::mat4 transform;
 
-	switch (actor->mActorType) {
+	switch (actor->mActorType)
+	{
 	case Actor::STATIC:
 		transform = actor->GetActorTransform();
 		mShader->setMat4("model", transform);
 		break;
 
-	case Actor::NPC:
-		actor->mActorPosition.x += mNpcSpeed * deltaTime;
-		if (actor->GetActorPosition().x >= 5 || actor->GetActorPosition().x <= -5)
-		{
-			mNpcSpeed *= -1.f;
-		}
-		actor->SetActorPosition(actor->GetActorPosition());
-		break;
-
-	case Actor::CURVETOFOLLOW:
-		transform = actor->GetActorTransform();
-		mShader->setMat4("model", transform);
-		break;
-
-	case Actor::NPC_FOLLOWCURVE:
-		if (!NpcFollowCurve(deltaTime, actor, "LineCurvedMesh", "LineCurve"))
-		{
-		}
-		break;
-
-	case Actor::NPC_FOLLOWLINE:
-		if (!NpcFollowCurve(deltaTime, actor, "LineMesh", "LineTest"))
-		{
-		}
-		break;
-
 	case Actor::PLAYER:
 		glm::vec3 playerHeight;
-		if (BarycentricCalculations(mSceneActors["PunktSky"], actor->GetActorPosition(), playerHeight))
+		glm::vec3 playerNormal;
+		if (BarycentricCalculations(mSceneActors["PunktSky"], actor->GetActorPosition(), playerHeight, playerNormal))
 		{
 			actor->SetActorPosition(playerHeight);
+			UpdateBall(actor, deltaTime, playerNormal);
 			std::cout << actor->GetActorPosition().x << ", " << actor->GetActorPosition().y << ", " << actor->GetActorPosition().z << "\n";
 		}
 		transform = actor->GetActorTransform();
@@ -181,7 +173,15 @@ void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std
 		break;
 
 	case Actor::BALL:
-		UpdateBall(deltaTime, actor);
+		glm::vec3 ballHeight;
+		glm::vec3 ballNormal;
+		if (BarycentricCalculations(mSceneActors["PunktSky"], actor->GetActorPosition(), ballHeight, ballNormal))
+		{
+			UpdateBall(actor, deltaTime, ballNormal);
+			//std::cout << actor->GetActorPosition().x << ", " << actor->GetActorPosition().y << ", " << actor->GetActorPosition().z << "\n";
+		}
+		transform = actor->GetActorTransform();
+		mShader->setMat4("model", transform);
 		break;
 
 	default:
@@ -370,7 +370,7 @@ void Scene::ResolveCollision(const CollisionInfo& collision)
 	}
 }
 
-bool Scene::BarycentricCalculations(std::shared_ptr<Actor>& objectToCheck, glm::vec3 targetedPos, glm::vec3& newPositionVector)
+bool Scene::BarycentricCalculations(std::shared_ptr<Actor>& objectToCheck, glm::vec3 targetedPos, glm::vec3& newPositionVector, glm::vec3& normal)
 {
 	glm::vec3 targetPosition = glm::vec3(targetedPos.x, targetedPos.z, 0);
 
@@ -403,6 +403,13 @@ bool Scene::BarycentricCalculations(std::shared_ptr<Actor>& objectToCheck, glm::
 
 			// Set the new position with the correct Y value
 			newPositionVector = glm::vec3(targetedPos.x, newY, targetedPos.z);
+
+			// Calculate the normal of the triangle
+			glm::vec3 normalP = objectToCheck->mMeshInfo->mVertices[P1].mNormal;
+			glm::vec3 normalQ = objectToCheck->mMeshInfo->mVertices[P2].mNormal;
+			glm::vec3 normalR = objectToCheck->mMeshInfo->mVertices[P3].mNormal;
+			normal = glm::normalize(U * normalP + V * normalQ + W * normalR);
+
 			return true;
 		}
 	}
@@ -418,6 +425,56 @@ glm::vec3 Scene::CalculateReflection(const glm::vec3& velocity, const glm::vec3&
 	return reflection;
 }
 
+void Scene::UpdateBall(std::shared_ptr<Actor>& objectToUpdate, float deltaTime, glm::vec3& normal)
+{
+    // Calculate the acceleration for the actor based on the normal
+    CalculateAccelerationVector(normal);
+
+    // Update the velocity of the actor based on the calculated acceleration vector
+    VelocityUpdate(objectToUpdate, deltaTime);
+
+    // Update the position of the actor based on the updated velocity
+    glm::vec3 position = objectToUpdate->GetActorPosition();
+    glm::vec3 velocity = objectToUpdate->GetActorVelocity();
+    glm::vec3 positionChange = velocity * deltaTime;
+    glm::vec3 newPosition = position + positionChange;
+
+	objectToUpdate->SetActorPosition({newPosition.x, position.y, newPosition.z});
+
+	//std::cout << "Updated position: " << newPosition.x << ", " << newPosition.y << ", " << newPosition.z << "\n";
+}
+
+void Scene::CalculateAccelerationVector(glm::vec3& normal)
+{
+	// Normalize the normal vector
+	glm::vec3 normalizedNormal = glm::normalize(normal);
+
+	// Defining gravity constant
+	const float g = 9.81f;
+
+	// Calculate the acceleration vector using the given formula
+	glm::vec3 accelerationVector = glm::vec3(normalizedNormal.x * normalizedNormal.y, normalizedNormal.z * normalizedNormal.y, normalizedNormal.y * normalizedNormal.y - 1);
+	glm::vec3 accelerationVectorGravity = glm::vec3(g * accelerationVector.x, g * accelerationVector.y, g * accelerationVector.z);
+
+	// Store the result in the member variable
+	mAcellerationVector = accelerationVectorGravity;
+	//std::cout << "Acceleration vector: " << accelerationVector.x << ", " << accelerationVector.y << ", " << accelerationVector.z << "\n";
+}
+
+void Scene::VelocityUpdate(std::shared_ptr<Actor>& objectToUpdate, float deltaTime)
+{
+	// Getting the current velocity
+	glm::vec3 currentVelocity = objectToUpdate->GetActorVelocity();
+
+	// Updating the velocity vector
+	glm::vec3 updatedVelocity = currentVelocity + deltaTime * mAcellerationVector;
+
+	// Store the updated velocity back in the object
+	objectToUpdate->SetActorVelocity(updatedVelocity);
+
+	std::cout << "Updated velocity: " << updatedVelocity.x << ", " << updatedVelocity.y << ", " << updatedVelocity.z << "\n";
+}
+
 void Scene::PopulateOctree()
 {
 	OctreePtr->Clear();
@@ -426,22 +483,6 @@ void Scene::PopulateOctree()
 		auto& actor = actorPair.second;
 		OctreePtr->Insert(actor);
 	}
-}
-
-void Scene::UpdateBall(float deltaTime, std::shared_ptr<Actor>& actor)
-{
-	glm::vec3 position = actor->GetActorPosition();
-	glm::vec3 velocity = actor->GetActorVelocity();
-	float scale = actor->GetActorScale();
-	float radius = actor->GetActorRadius();
-
-	float scaledballradius = radius * scale;
-
-	glm::vec3 positionchange = velocity * deltaTime;
-	glm::vec3 newposition = position + positionchange;
-
-	actor->SetActorVelocity(velocity);
-	actor->SetActorPosition(newposition);
 }
 
 bool Scene::NpcFollowCurve(float deltaTime, std::shared_ptr<Actor>& actors, std::string meshToFollow, std::string actorOffset)
@@ -524,3 +565,20 @@ void Scene::BoxAgainstBoxCollision(float deltaTime, std::shared_ptr<Actor>& acto
 	actor->SetActorPosition(position);
 	actor->mNegativeDirection = hasCollided;
 }
+
+// From Compulsory 1
+//void Scene::UpdateBall(std::shared_ptr<Actor>& objectToUpdate, float deltaTime)
+//{
+	//glm::vec3 position = actor->GetActorPosition();
+	//glm::vec3 velocity = actor->GetActorVelocity();
+	//float scale = actor->GetActorScale();
+	//float radius = actor->GetActorRadius();
+
+	//float scaledballradius = radius * scale;
+
+	//glm::vec3 positionchange = velocity * deltaTime;
+	//glm::vec3 newposition = position + positionchange;
+
+	//actor->SetActorVelocity(velocity);
+	//actor->SetActorPosition(newposition);
+//}

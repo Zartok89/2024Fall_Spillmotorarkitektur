@@ -53,7 +53,7 @@ Mesh::Mesh(MeshShape meshShape, Shader* meshShader) : mMeshShape(meshShape), mMe
 		break;
 
 	case MeshShape::PUNKTSKY:
-		CreateMeshFromPointCloud(150, false, {0.1f, 0.1f, 0.1f});
+		CreateMeshFromPointCloud(150, false, {1.f, 1.f, 1.f});
 		break;
 
 	default:
@@ -66,6 +66,8 @@ Mesh::Mesh(MeshShape meshShape, Shader* meshShader) : mMeshShape(meshShape), mMe
 void Mesh::RenderMesh()
 {
 	mMeshShader->setInt("texture1", 0);
+
+	//create accelleration for object
 
 	// Set static light properties
 	mMeshShader->setVec3("lightPos", lightPos);

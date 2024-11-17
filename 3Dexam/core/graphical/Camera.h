@@ -60,7 +60,7 @@ public:
 	float mYaw{ -90.0f };
 	float mPitch{ 0.0f };
 	// Camera options
-	float mCameraSpeed{ 2.5f };
+	float mCameraSpeed{ 50.f };
 	float mMouseSensitivity{ 0.1f };
 	float mZoom{ 45.0f };
 	// Default matrix for the camera

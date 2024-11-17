@@ -1,4 +1,5 @@
 #pragma once
+#include <chrono>
 #include <string>
 #include <unordered_map>
 #include <GLFW/glfw3.h>
@@ -29,6 +30,7 @@ public:
 	 */
 	Scene();
 	void RenderScene();
+	void Update(float deltaTime);
 
 	/*
 	 * Loading
@@ -50,11 +52,17 @@ public:
 	void ResolveCollision(const CollisionInfo& collision);
 	void BoxAgainstBoxCollision(float deltaTime, std::shared_ptr<Actor>& actor);
 	// Pathing logic //
-	void UpdateBall(float deltaTime, std::shared_ptr<Actor>& actor);
 	bool NpcFollowCurve(float deltaTime, std::shared_ptr<Actor>& actors, std::string meshToFollow, std::string actorOffset);
-	bool BarycentricCalculations(std::shared_ptr<Actor>& objectToCheck, glm::vec3 targetedPos, glm::vec3& newPositionVector);
 	// Helper logic //
 	glm::vec3 CalculateReflection(const glm::vec3& velocity, const glm::vec3& normal);
+
+	/*
+	 * Scene Physics
+	 */
+	void UpdateBall(std::shared_ptr<Actor>& objectToUpdate, float deltaTime, glm::vec3& normal);
+	void CalculateAccelerationVector(glm::vec3& normal);
+	void VelocityUpdate(std::shared_ptr<Actor>& objectToUpdate, float deltaTime);
+	bool BarycentricCalculations(std::shared_ptr<Actor>& objectToCheck, glm::vec3 targetedPos, glm::vec3& newPositionVector, glm::vec3& normal);
 
 
 	/*
@@ -67,29 +75,34 @@ public:
 	std::unordered_map<std::string, std::shared_ptr<Actor>> mSceneBallActors;
 	Shader* mShader = new Shader("core/shader/Shader.vs", "core/shader/Shader.fs");
 	float mNpcSpeed{ 5.f };
-	double previousTime = glfwGetTime();
+	//double previousTime = glfwGetTime();
+	std::chrono::time_point<std::chrono::high_resolution_clock> previousTime;
+    float deltaTime;
 	bool hasSetNewLine{ false };
 	bool shouldRenderWireframe{ false };
 
-	// CubeExtent & Octree
+	/*CubeExtent & Octree*/
 	void PopulateOctree();
 	glm::vec3 minCubeExtent;
 	glm::vec3 maxCubeExtent;
 	int octreeCapacity = 8;
 
-	// NPC Varibles
+	/*NPC Varibles*/
 	int currentVertexIndex;
 	bool movingForward;
 	float interpolateFactor;
 	float npcMovementSpeed;
 
-	// Material variables
+	/*Material variables*/
 	glm::vec3 ambient {1.f, 1.f, 1.f};
 	glm::vec3 diffuse {1.f, 1.f, 1.f};
 	glm::vec3 specular {1.f, 1.f, 1.f};
 	float shininess {1.0f};
+		
+	/*Physics Variables*/
+	glm::vec3 mAcellerationVector;
 
-	// Pointers
+	/*Pointers*/
 	std::unique_ptr<RandomNumberGenerator> RandomNumberGenerator;
 	std::unique_ptr<OctreeNode> OctreePtr;
 };

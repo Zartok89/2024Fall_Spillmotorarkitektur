@@ -48,7 +48,7 @@ void Controller::CameraInputs(double dt)
 	}
 	if (glfwGetKey(mWindow, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 	{
-		cameraPtr->mCameraSpeed = 20.f;
+		cameraPtr->mCameraSpeed = 200.f;
 	}
 	if (glfwGetKey(mWindow, GLFW_KEY_3) == GLFW_PRESS)
 	{
@@ -60,7 +60,7 @@ void Controller::CameraInputs(double dt)
 	}
 	else if (glfwGetKey(mWindow, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE)
 	{
-		cameraPtr->mCameraSpeed = 8.f;
+		cameraPtr->mCameraSpeed = 100.f;
 	}
 }
 
