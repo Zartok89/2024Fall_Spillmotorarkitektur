@@ -165,24 +165,24 @@ void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std
 		if (BarycentricCalculations(mSceneActors["PunktSky"], actor->GetActorPosition(), playerHeight, playerNormal))
 		{
 			actor->SetActorPosition(playerHeight);
-			UpdateBall(actor, deltaTime, playerNormal);
+			ObjectPhysics(actor, deltaTime, playerNormal);
 			std::cout << actor->GetActorPosition().x << ", " << actor->GetActorPosition().y << ", " << actor->GetActorPosition().z << "\n";
 		}
 		transform = actor->GetActorTransform();
 		mShader->setMat4("model", transform);
 		break;
 
-	case Actor::BALL:
-		glm::vec3 ballHeight;
-		glm::vec3 ballNormal;
-		if (BarycentricCalculations(mSceneActors["PunktSky"], actor->GetActorPosition(), ballHeight, ballNormal))
-		{
-			UpdateBall(actor, deltaTime, ballNormal);
-			//std::cout << actor->GetActorPosition().x << ", " << actor->GetActorPosition().y << ", " << actor->GetActorPosition().z << "\n";
-		}
-		transform = actor->GetActorTransform();
-		mShader->setMat4("model", transform);
-		break;
+	//case Actor::BALL:
+	//	glm::vec3 ballHeight;
+	//	glm::vec3 ballNormal;
+	//	if (BarycentricCalculations(mSceneActors["PunktSky"], actor->GetActorPosition(), ballHeight, ballNormal))
+	//	{
+	//		UpdateBall(actor, deltaTime, ballNormal);
+	//		//std::cout << actor->GetActorPosition().x << ", " << actor->GetActorPosition().y << ", " << actor->GetActorPosition().z << "\n";
+	//	}
+	//	transform = actor->GetActorTransform();
+	//	mShader->setMat4("model", transform);
+	//	break;
 
 	default:
 		break;
@@ -425,13 +425,12 @@ glm::vec3 Scene::CalculateReflection(const glm::vec3& velocity, const glm::vec3&
 	return reflection;
 }
 
-void Scene::UpdateBall(std::shared_ptr<Actor>& objectToUpdate, float deltaTime, glm::vec3& normal)
+void Scene::ObjectPhysics(std::shared_ptr<Actor>& objectToUpdate, float deltaTime, glm::vec3& normal)
 {
-    // Calculate the acceleration for the actor based on the normal
-    CalculateAccelerationVector(normal);
-
+    //// Calculate the acceleration for the actor based on the normal
+    //CalculateAccelerationVector(normal);
     // Update the velocity of the actor based on the calculated acceleration vector
-    VelocityUpdate(objectToUpdate, deltaTime);
+    VelocityUpdate(objectToUpdate, CalculateAccelerationVector(normal), deltaTime);
 
     // Update the position of the actor based on the updated velocity
     glm::vec3 position = objectToUpdate->GetActorPosition();
@@ -444,30 +443,38 @@ void Scene::UpdateBall(std::shared_ptr<Actor>& objectToUpdate, float deltaTime, 
 	//std::cout << "Updated position: " << newPosition.x << ", " << newPosition.y << ", " << newPosition.z << "\n";
 }
 
-void Scene::CalculateAccelerationVector(glm::vec3& normal)
+glm::vec3 Scene::CalculateAccelerationVector(glm::vec3& normal)
 {
-	// Normalize the normal vector
-	glm::vec3 normalizedNormal = glm::normalize(normal);
+    // Normalize the normal vector
+    glm::vec3 normalizedNormal = glm::normalize(normal);
 
-	// Defining gravity constant
-	const float g = 9.81f;
+    // Define the gravitational constant
+    const float g = 0.0981f;
 
-	// Calculate the acceleration vector using the given formula
-	glm::vec3 accelerationVector = glm::vec3(normalizedNormal.x * normalizedNormal.y, normalizedNormal.z * normalizedNormal.y, normalizedNormal.y * normalizedNormal.y - 1);
-	glm::vec3 accelerationVectorGravity = glm::vec3(g * accelerationVector.x, g * accelerationVector.y, g * accelerationVector.z);
+    // Calculate the acceleration vector using the given formula
+    glm::vec3 gravity(0.0f, g, 0.0f); // Gravity acts downwards in the y direction
+    glm::vec3 accelerationVector = glm::dot(gravity, normalizedNormal) * normalizedNormal;
 
-	// Store the result in the member variable
-	mAcellerationVector = accelerationVectorGravity;
+    return accelerationVector;
+
+
+	// ----------------
+	//// Calculate the acceleration vector using the given formula
+	//glm::vec3 accelerationVector = glm::vec3(normalizedNormal.x * normalizedNormal.y, normalizedNormal.z * normalizedNormal.y, normalizedNormal.y * normalizedNormal.y - 1);
+	//glm::vec3 accelerationVectorGravity = glm::vec3(g * accelerationVector.x, g * accelerationVector.y, g * accelerationVector.z);
+
+	//// Store the result in the member variable
+	//mAcellerationVector = accelerationVectorGravity;
 	//std::cout << "Acceleration vector: " << accelerationVector.x << ", " << accelerationVector.y << ", " << accelerationVector.z << "\n";
 }
 
-void Scene::VelocityUpdate(std::shared_ptr<Actor>& objectToUpdate, float deltaTime)
+void Scene::VelocityUpdate(std::shared_ptr<Actor>& objectToUpdate, const glm::vec3& acceleration, float deltaTime)
 {
 	// Getting the current velocity
 	glm::vec3 currentVelocity = objectToUpdate->GetActorVelocity();
 
 	// Updating the velocity vector
-	glm::vec3 updatedVelocity = currentVelocity + deltaTime * mAcellerationVector;
+	glm::vec3 updatedVelocity = currentVelocity + deltaTime * acceleration;
 
 	// Store the updated velocity back in the object
 	objectToUpdate->SetActorVelocity(updatedVelocity);

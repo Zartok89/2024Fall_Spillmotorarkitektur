@@ -59,9 +59,9 @@ public:
 	/*
 	 * Scene Physics
 	 */
-	void UpdateBall(std::shared_ptr<Actor>& objectToUpdate, float deltaTime, glm::vec3& normal);
-	void CalculateAccelerationVector(glm::vec3& normal);
-	void VelocityUpdate(std::shared_ptr<Actor>& objectToUpdate, float deltaTime);
+	void ObjectPhysics(std::shared_ptr<Actor>& objectToUpdate, float deltaTime, glm::vec3& normal);
+	glm::vec3 CalculateAccelerationVector(glm::vec3& normal);
+	void VelocityUpdate(std::shared_ptr<Actor>& objectToUpdate, const glm::vec3& acceleration, float deltaTime);
 	bool BarycentricCalculations(std::shared_ptr<Actor>& objectToCheck, glm::vec3 targetedPos, glm::vec3& newPositionVector, glm::vec3& normal);
 
 
@@ -98,9 +98,6 @@ public:
 	glm::vec3 diffuse {1.f, 1.f, 1.f};
 	glm::vec3 specular {1.f, 1.f, 1.f};
 	float shininess {1.0f};
-		
-	/*Physics Variables*/
-	glm::vec3 mAcellerationVector;
 
 	/*Pointers*/
 	std::unique_ptr<RandomNumberGenerator> RandomNumberGenerator;
