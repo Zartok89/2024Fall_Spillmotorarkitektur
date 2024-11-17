@@ -26,38 +26,37 @@ void Controller::CameraInputs(double dt)
 	{
 		cameraPtr->ProcessKeyboard(FORWARD, dt);
 	}
+
 	if (glfwGetKey(mWindow, GLFW_KEY_S) == GLFW_PRESS)
 	{
 		cameraPtr->ProcessKeyboard(BACKWARD, dt);
 	}
+
 	if (glfwGetKey(mWindow, GLFW_KEY_A) == GLFW_PRESS)
 	{
 		cameraPtr->ProcessKeyboard(LEFT, dt);
 	}
+
 	if (glfwGetKey(mWindow, GLFW_KEY_D) == GLFW_PRESS)
 	{
 		cameraPtr->ProcessKeyboard(RIGHT, dt);
 	}
+
 	if (glfwGetKey(mWindow, GLFW_KEY_E) == GLFW_PRESS)
 	{
 		cameraPtr->ProcessKeyboard(UP, dt);
 	}
+
 	if (glfwGetKey(mWindow, GLFW_KEY_Q) == GLFW_PRESS)
 	{
 		cameraPtr->ProcessKeyboard(DOWN, dt);
 	}
+
 	if (glfwGetKey(mWindow, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 	{
 		cameraPtr->mCameraSpeed = 200.f;
 	}
-	if (glfwGetKey(mWindow, GLFW_KEY_3) == GLFW_PRESS)
-	{
-		scenePtr->shouldRenderWireframe = false;
-	}
-	if (glfwGetKey(mWindow, GLFW_KEY_4) == GLFW_PRESS)
-	{
-		scenePtr->shouldRenderWireframe = true;
-	}
+
 	else if (glfwGetKey(mWindow, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE)
 	{
 		cameraPtr->mCameraSpeed = 100.f;
@@ -76,7 +75,7 @@ void Controller::PlayerInputs(double dt)
 	{
 		for (auto& actors : scenePtr->mSceneActors)
 		{
-			if (actors.second->mActorType == Actor::PLAYER)
+			if (actors.second->mActorType == Actor::DYNAMICOBJECT)
 			{
 				float posZ = actors.second->mActorPosition.z -= mPlayerSpeed * dt;
 				actors.second->SetActorTransform({ 0.f, 0.f, posZ }, actors.second->mActorScale);
@@ -88,7 +87,7 @@ void Controller::PlayerInputs(double dt)
 	{
 		for (auto& actors : scenePtr->mSceneActors)
 		{
-			if (actors.second->mActorType == Actor::PLAYER)
+			if (actors.second->mActorType == Actor::DYNAMICOBJECT)
 			{
 				float posZ = actors.second->mActorPosition.z += mPlayerSpeed * dt;
 				actors.second->SetActorTransform({ 0.f, 0.f, posZ }, actors.second->mActorScale);
@@ -100,7 +99,7 @@ void Controller::PlayerInputs(double dt)
 	{
 		for (auto& actors : scenePtr->mSceneActors)
 		{
-			if (actors.second->mActorType == Actor::PLAYER)
+			if (actors.second->mActorType == Actor::DYNAMICOBJECT)
 			{
 				float posX = actors.second->mActorPosition.x -= mPlayerSpeed * dt;
 				actors.second->SetActorTransform({ posX, 0.f, 0.f }, actors.second->mActorScale);
@@ -112,7 +111,7 @@ void Controller::PlayerInputs(double dt)
 	{
 		for (auto& actors : scenePtr->mSceneActors)
 		{
-			if (actors.second->mActorType == Actor::PLAYER)
+			if (actors.second->mActorType == Actor::DYNAMICOBJECT)
 			{
 				float posX = actors.second->mActorPosition.x += mPlayerSpeed * dt;
 				actors.second->SetActorTransform({ posX, 0.f, 0.f }, actors.second->mActorScale);
@@ -124,8 +123,32 @@ void Controller::PlayerInputs(double dt)
 	{
 		mPlayerSpeed = 15.f;
 	}
+
 	else if (glfwGetKey(mWindow, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE)
 	{
 		mPlayerSpeed = 8.f;
+	}
+}
+
+void Controller::GeneralInputs(double dt)
+{
+	if (glfwGetKey(mWindow, GLFW_KEY_3) == GLFW_PRESS)
+	{
+		scenePtr->shouldRenderWireframe = false;
+	}
+
+	if (glfwGetKey(mWindow, GLFW_KEY_4) == GLFW_PRESS)
+	{
+		scenePtr->shouldRenderWireframe = true;
+	}
+
+	if (glfwGetKey(mWindow, GLFW_KEY_T) == GLFW_PRESS)
+	{
+		scenePtr->shouldSimualtePhysics = true;
+	}
+
+	if (glfwGetKey(mWindow, GLFW_KEY_Y) == GLFW_PRESS)
+	{
+		scenePtr->shouldSimualtePhysics = false;
 	}
 }

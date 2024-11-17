@@ -19,18 +19,18 @@ Actor::Actor(const std::string& meshName, std::shared_ptr<Mesh> meshInfo, glm::v
 {
 	ActorTransform();
 
-	if (actorType == ActorType::BALL || actorType == ActorType::STATIC)
-	{
-		SetActorCollision();
-	}
+	//if (actorType == ActorType::BALL || actorType == ActorType::STATIC)
+	//{
+	//	SetActorCollision();
+	//}
 
-	if (actorType == ActorType::BALL)
-	{
-		mNegativeDirection = false;
-		mActorVelocity = glm::vec3(0.f, 0.f, 0.f);
-		mActorMass = 1.f;
-		SetRandomActorVelocity();
-	}
+	//if (actorType == ActorType::BALL)
+	//{
+	//	mNegativeDirection = false;
+	//	mActorVelocity = glm::vec3(0.f, 0.f, 0.f);
+	//	mActorMass = 1.f;
+	//	SetRandomActorVelocity();
+	//}
 }
 
 // Setup of the transform of the actor

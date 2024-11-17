@@ -75,7 +75,6 @@ public:
 	std::unordered_map<std::string, std::shared_ptr<Actor>> mSceneBallActors;
 	Shader* mShader = new Shader("core/shader/Shader.vs", "core/shader/Shader.fs");
 	float mNpcSpeed{ 5.f };
-	//double previousTime = glfwGetTime();
 	std::chrono::time_point<std::chrono::high_resolution_clock> previousTime;
     float deltaTime;
 	bool hasSetNewLine{ false };
@@ -92,6 +91,9 @@ public:
 	bool movingForward;
 	float interpolateFactor;
 	float npcMovementSpeed;
+
+	/*Physics Variables*/
+	bool shouldSimualtePhysics {false};
 
 	/*Material variables*/
 	glm::vec3 ambient {1.f, 1.f, 1.f};

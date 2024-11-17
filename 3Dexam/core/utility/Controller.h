@@ -24,6 +24,7 @@ public:
 	 */
 	void CameraInputs(double dt);
 	void PlayerInputs(double dt);
+	void GeneralInputs(double dt);
 
 	/*
 	 * Member Variables and pointers

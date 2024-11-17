@@ -21,7 +21,8 @@ void Scene::RenderScene()
 
 	// Clamp delta time to a maximum value
 	const float maxDeltaTime = 0.1f;
-	if (deltaTime > maxDeltaTime) {
+	if (deltaTime > maxDeltaTime)
+	{
 		deltaTime = maxDeltaTime;
 	}
 
@@ -119,7 +120,7 @@ void Scene::LoadActors()
 	//mSceneActors["CubeContainer"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 2.f, Actor::ActorType::STATIC, mShader, false, ""));
 	//mSceneActors["bSplineBasis"] = (std::make_shared<Actor>("bSplineBasisMesh", mSceneMeshes["bSplineBasisMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 3.f, Actor::ActorType::STATIC, mShader, false, ""));
 	mSceneActors["PunktSky"] = (std::make_shared<Actor>("PunktSkyMesh", mSceneMeshes["PunktSkyMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader, false, ""));
-	mSceneActors["Player"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::PLAYER, mShader, false, ""));
+	mSceneActors["Player"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::DYNAMICOBJECT, mShader, false, ""));
 
 	//// Map Bounds
 	//mSceneActors["CubeContainer"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 50.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
@@ -159,30 +160,21 @@ void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std
 		mShader->setMat4("model", transform);
 		break;
 
-	case Actor::PLAYER:
-		glm::vec3 playerHeight;
-		glm::vec3 playerNormal;
-		if (BarycentricCalculations(mSceneActors["PunktSky"], actor->GetActorPosition(), playerHeight, playerNormal))
+	case Actor::DYNAMICOBJECT:
+		glm::vec3 objectHeight;
+		glm::vec3 objectNormal;
+		if (shouldSimualtePhysics)
 		{
-			actor->SetActorPosition(playerHeight);
-			ObjectPhysics(actor, deltaTime, playerNormal);
-			std::cout << actor->GetActorPosition().x << ", " << actor->GetActorPosition().y << ", " << actor->GetActorPosition().z << "\n";
+			if (BarycentricCalculations(mSceneActors["PunktSky"], actor->GetActorPosition(), objectHeight, objectNormal))
+			{
+				actor->SetActorPosition(objectHeight);
+				ObjectPhysics(actor, deltaTime, objectNormal);
+				std::cout << actor->GetActorPosition().x << ", " << actor->GetActorPosition().y << ", " << actor->GetActorPosition().z << "\n";
+			}
 		}
 		transform = actor->GetActorTransform();
 		mShader->setMat4("model", transform);
 		break;
-
-	//case Actor::BALL:
-	//	glm::vec3 ballHeight;
-	//	glm::vec3 ballNormal;
-	//	if (BarycentricCalculations(mSceneActors["PunktSky"], actor->GetActorPosition(), ballHeight, ballNormal))
-	//	{
-	//		UpdateBall(actor, deltaTime, ballNormal);
-	//		//std::cout << actor->GetActorPosition().x << ", " << actor->GetActorPosition().y << ", " << actor->GetActorPosition().z << "\n";
-	//	}
-	//	transform = actor->GetActorTransform();
-	//	mShader->setMat4("model", transform);
-	//	break;
 
 	default:
 		break;
@@ -191,7 +183,7 @@ void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std
 
 void Scene::HandleSceneCollision(float deltaTime)
 {
-	if (Actor::BALL)
+	if (Actor::DYNAMICOBJECT)
 	{
 		for (auto& ballPair : mSceneBallActors)
 		{
@@ -204,7 +196,7 @@ void Scene::HandleSceneCollision(float deltaTime)
 
 		for (const auto& actorPair : mSceneActors) {
 			auto& actor = actorPair.second;
-			if (actor->mActorType != Actor::BALL && actor->mActorType != Actor::STATIC) continue;
+			if (actor->mActorType != Actor::DYNAMICOBJECT && actor->mActorType != Actor::STATIC) continue;
 
 			// Define a query range based on actor's position and radius
 			AABB queryRange
@@ -427,36 +419,33 @@ glm::vec3 Scene::CalculateReflection(const glm::vec3& velocity, const glm::vec3&
 
 void Scene::ObjectPhysics(std::shared_ptr<Actor>& objectToUpdate, float deltaTime, glm::vec3& normal)
 {
-    //// Calculate the acceleration for the actor based on the normal
-    //CalculateAccelerationVector(normal);
-    // Update the velocity of the actor based on the calculated acceleration vector
-    VelocityUpdate(objectToUpdate, CalculateAccelerationVector(normal), deltaTime);
+	// Calculate the acceleration and velocity for the actor based on the normal
+	VelocityUpdate(objectToUpdate, CalculateAccelerationVector(normal), deltaTime);
 
-    // Update the position of the actor based on the updated velocity
-    glm::vec3 position = objectToUpdate->GetActorPosition();
-    glm::vec3 velocity = objectToUpdate->GetActorVelocity();
-    glm::vec3 positionChange = velocity * deltaTime;
-    glm::vec3 newPosition = position + positionChange;
+	// Update the position of the actor based on the updated velocity
+	glm::vec3 position = objectToUpdate->GetActorPosition();
+	glm::vec3 velocity = objectToUpdate->GetActorVelocity();
+	glm::vec3 positionChange = velocity * deltaTime;
+	glm::vec3 newPosition = position + positionChange;
 
-	objectToUpdate->SetActorPosition({newPosition.x, position.y, newPosition.z});
+	objectToUpdate->SetActorPosition({ newPosition.x, position.y, newPosition.z });
 
 	//std::cout << "Updated position: " << newPosition.x << ", " << newPosition.y << ", " << newPosition.z << "\n";
 }
 
 glm::vec3 Scene::CalculateAccelerationVector(glm::vec3& normal)
 {
-    // Normalize the normal vector
-    glm::vec3 normalizedNormal = glm::normalize(normal);
+	// Normalize the normal vector
+	glm::vec3 normalizedNormal = glm::normalize(normal);
 
-    // Define the gravitational constant
-    const float g = 0.0981f;
+	// Define the gravitational constant
+	const float g = 0.981f;
 
-    // Calculate the acceleration vector using the given formula
-    glm::vec3 gravity(0.0f, g, 0.0f); // Gravity acts downwards in the y direction
-    glm::vec3 accelerationVector = glm::dot(gravity, normalizedNormal) * normalizedNormal;
+	// Calculate the acceleration vector using the given formula
+	glm::vec3 gravity(0.0f, g, 0.0f); // Gravity acts downwards in the y direction
+	glm::vec3 accelerationVector = glm::dot(gravity, normalizedNormal) * normalizedNormal;
 
-    return accelerationVector;
-
+	return accelerationVector;
 
 	// ----------------
 	//// Calculate the acceleration vector using the given formula

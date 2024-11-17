@@ -156,4 +156,5 @@ void Application::CheckingControllerState(float deltaTime)
 	{
 		controllerPtr->CameraInputs(deltaTime);
 	}
+	controllerPtr->GeneralInputs(deltaTime);
 }
