@@ -70,7 +70,6 @@ public:
 	 * Member variables and unordered maps
 	 */
 	std::unordered_map<std::string, std::shared_ptr<Texture>> mSceneTextures;
-	std::unordered_map<std::string, std::shared_ptr<Material>> mSceneMaterials;
 	std::unordered_map<std::string, std::shared_ptr<Mesh>> mSceneMeshes;
 	std::unordered_map<std::string, std::shared_ptr<Actor>> mSceneActors;
 	std::unordered_map<std::string, std::shared_ptr<Actor>> mSceneBallActors;
