@@ -151,4 +151,9 @@ void Controller::GeneralInputs(double dt)
 	{
 		scenePtr->shouldSimualtePhysics = false;
 	}
+
+	if (glfwGetKey(mWindow, GLFW_KEY_G) == GLFW_PRESS)
+	{
+		scenePtr->SpawnObjects();
+	}
 }

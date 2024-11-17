@@ -41,7 +41,7 @@ Mesh::Mesh(MeshShape meshShape, Shader* meshShader) : mMeshShape(meshShape), mMe
 		break;
 
 	case MeshShape::SPHERE:
-		SphereMesh(5.f, 10, 10);
+		SphereMesh(1.f, 20, 20);
 		break;
 
 	case MeshShape::TERRAIN_FLAT:
@@ -283,7 +283,8 @@ void Mesh::SphereMesh(float radius, int sectorCount, int stackCount)
 			s = (float)j / sectorCount;
 			t = (float)i / stackCount;
 
-			mVertices.emplace_back(Vertex({ x, y, z }, { nx, ny, nz }, { s, t }));
+			//mVertices.emplace_back(Vertex({ x, y, z }, { nx, ny, nz }, { s, t }));
+			mVertices.emplace_back(Vertex({ x, y, z }, {1.f, 0.f, 0.f}, { nx, ny, nz }));
 		}
 	}
 
@@ -508,6 +509,18 @@ void Mesh::CreateMeshFromPointCloud(int resolution, bool usingBSpling, glm::vec3
 	// Calculating normals for each triangle
 	CalculateNormals();
 	std::cout << "Triangulated vertices normal calculated\n";
+
+	// Storing terrain min and max limits from the new mVertices vector
+	for (const auto& vertices : mVertices )
+	{
+		
+		minTerrainLimit = glm::min(minTerrainLimit, vertices.mPosition);
+		maxTerrainLimit = glm::max(maxTerrainLimit, vertices.mPosition);
+	}
+
+	std::cout << "__Min and Max Terrain Limit set__\n";
+	std::cout << "Min x: " << minTerrainLimit.x << "Min y: " << minTerrainLimit.y << "Min z: " << minTerrainLimit.z << "\n";
+	std::cout << "Max x: " << maxTerrainLimit.x << "Max y: " << maxTerrainLimit.y << "Max z: " << maxTerrainLimit.z << "\n";
 }
 
 void Mesh::GenerateAndPopulateGrid(int resolution, std::vector<Vertex>& tempVertices, float minVertX, float maxVertX, float minVertZ, float maxVertZ, glm::vec3 cloudScale)

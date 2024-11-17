@@ -35,7 +35,9 @@ void Scene::RenderScene()
 
 		if (actors.second->mUseTexture == true)
 		{
+			glActiveTexture(GL_TEXTURE0);
 			mSceneTextures[actors.second->mTexture]->BindTextures();
+			mShader->setInt("texture1", 0);
 		}
 		mShader->setBool("useTexture", actors.second->mUseTexture);
 
@@ -46,19 +48,19 @@ void Scene::RenderScene()
 		mSceneMeshes[actors.second->mName]->RenderMesh();
 	}
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	for (auto& actors : mSceneBallActors)
-	{
-		if (actors.second->mUseTexture == true)
-		{
-			mSceneTextures[actors.second->mTexture]->BindTextures();
-		}
-		mShader->setBool("useTexture", actors.second->mUseTexture);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	//for (auto& actors : mSceneBallActors)
+	//{
+	//	if (actors.second->mUseTexture == true)
+	//	{
+	//		mSceneTextures[actors.second->mTexture]->BindTextures();
+	//	}
+	//	mShader->setBool("useTexture", actors.second->mUseTexture);
 
-		ActorSceneLogic(deltaTime, actors);
+	//	ActorSceneLogic(deltaTime, actors);
 
-		mSceneMeshes[actors.second->mName]->RenderMesh();
-	}
+	//	mSceneMeshes[actors.second->mName]->RenderMesh();
+	//}
 	//HandleSceneCollision(deltaTime);
 }
 
@@ -119,8 +121,14 @@ void Scene::LoadActors()
 {
 	//mSceneActors["CubeContainer"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 2.f, Actor::ActorType::STATIC, mShader, false, ""));
 	//mSceneActors["bSplineBasis"] = (std::make_shared<Actor>("bSplineBasisMesh", mSceneMeshes["bSplineBasisMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 3.f, Actor::ActorType::STATIC, mShader, false, ""));
+
+	/*Terrain*/
 	mSceneActors["PunktSky"] = (std::make_shared<Actor>("PunktSkyMesh", mSceneMeshes["PunktSkyMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader, false, ""));
-	mSceneActors["Player"] = (std::make_shared<Actor>("CubeMeshColor", mSceneMeshes["CubeMeshColor"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::DYNAMICOBJECT, mShader, false, ""));
+	minTerrainLimit = mSceneActors["PunktSky"]->mMeshInfo->minTerrainLimit;
+	maxTerrainLimit = mSceneActors["PunktSky"]->mMeshInfo->maxTerrainLimit;
+
+	/*Objects*/
+	//mSceneActors["Player"] = (std::make_shared<Actor>("SphereMesh", mSceneMeshes["SphereMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::DYNAMICOBJECT, mShader, true, "BlueTexture"));
 
 	//// Map Bounds
 	//mSceneActors["CubeContainer"] = (std::make_shared<Actor>("CubeMesh", mSceneMeshes["CubeMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 50.f, Actor::ActorType::STATIC, mShader, "GrassTexture"));
@@ -169,7 +177,7 @@ void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std
 			{
 				actor->SetActorPosition(objectHeight);
 				ObjectPhysics(actor, deltaTime, objectNormal);
-				std::cout << actor->GetActorPosition().x << ", " << actor->GetActorPosition().y << ", " << actor->GetActorPosition().z << "\n";
+				//std::cout << actor->GetActorPosition().x << ", " << actor->GetActorPosition().y << ", " << actor->GetActorPosition().z << "\n";
 			}
 		}
 		transform = actor->GetActorTransform();
@@ -394,7 +402,7 @@ bool Scene::BarycentricCalculations(std::shared_ptr<Actor>& objectToCheck, glm::
 				W * objectToCheck->mMeshInfo->mVertices[P3].mPosition.y;
 
 			// Set the new position with the correct Y value
-			newPositionVector = glm::vec3(targetedPos.x, newY, targetedPos.z);
+			newPositionVector = glm::vec3(targetedPos.x, newY + 1.f, targetedPos.z);
 
 			// Calculate the normal of the triangle
 			glm::vec3 normalP = objectToCheck->mMeshInfo->mVertices[P1].mNormal;
@@ -415,6 +423,31 @@ glm::vec3 Scene::CalculateReflection(const glm::vec3& velocity, const glm::vec3&
 	glm::vec3 reflection = velocity - 2.0f * glm::dot(velocity, normalizedNormal) * normalizedNormal;
 
 	return reflection;
+}
+
+void Scene::SpawnObjects()
+{
+	int spawnPositionX = 0;
+	int spawnPositionZ = 0;
+	std::cout << "Enter a position between (" << minTerrainLimit.x << ", " << minTerrainLimit.z << ") and (" << maxTerrainLimit.x << ", " << maxTerrainLimit.z << ") \n";
+	std::cout << "X position: "; std::cin >> spawnPositionX;
+	std::cout << "Z position: "; std::cin >> spawnPositionZ;
+	if (spawnPositionX < minTerrainLimit.x || spawnPositionX > maxTerrainLimit.x
+		|| spawnPositionZ < minTerrainLimit.z || spawnPositionZ > maxTerrainLimit.z)
+	{
+		std::cout << "Error, coordinates is out of bounds! \n";
+	}
+	else
+	{
+		std::cout << "Spawned object at position (" << spawnPositionX << ", " << spawnPositionZ << ") \n";
+		SpawnSetup(spawnPositionX, spawnPositionZ);
+	}
+}
+
+void Scene::SpawnSetup(float spawnPositionX, float spawnPositionZ)
+{
+	mSceneActors["Object" + std::to_string(objectsSpawned)] = (std::make_shared<Actor>("SphereMesh", mSceneMeshes["SphereMesh"], glm::vec3{ spawnPositionX, 130.f, spawnPositionZ }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::DYNAMICOBJECT, mShader, false, ""));
+	objectsSpawned++;
 }
 
 void Scene::ObjectPhysics(std::shared_ptr<Actor>& objectToUpdate, float deltaTime, glm::vec3& normal)
@@ -468,7 +501,7 @@ void Scene::VelocityUpdate(std::shared_ptr<Actor>& objectToUpdate, const glm::ve
 	// Store the updated velocity back in the object
 	objectToUpdate->SetActorVelocity(updatedVelocity);
 
-	std::cout << "Updated velocity: " << updatedVelocity.x << ", " << updatedVelocity.y << ", " << updatedVelocity.z << "\n";
+	//std::cout << "Updated velocity: " << updatedVelocity.x << ", " << updatedVelocity.y << ", " << updatedVelocity.z << "\n";
 }
 
 void Scene::PopulateOctree()

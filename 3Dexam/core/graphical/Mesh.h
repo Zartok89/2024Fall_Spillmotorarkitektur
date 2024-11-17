@@ -142,6 +142,8 @@ public:
 	float mTerrainDivisionsWidth{ 40.f };
 	float mTerrainDivisionsDepth{ 20.f };
 	bool setWireframe{ false };
+	glm::vec3 minTerrainLimit{ 0.f, 0.f, 0.f, };
+	glm::vec3 maxTerrainLimit{ 0.f, 0.f, 0.f, };
 
 	/*BiQuadratic Spline Variables*/
 	float B0(float t) { return 0.5f * (1 - t) * (1 - t); }

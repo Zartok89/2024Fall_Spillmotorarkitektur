@@ -55,6 +55,8 @@ public:
 	bool NpcFollowCurve(float deltaTime, std::shared_ptr<Actor>& actors, std::string meshToFollow, std::string actorOffset);
 	// Helper logic //
 	glm::vec3 CalculateReflection(const glm::vec3& velocity, const glm::vec3& normal);
+	void SpawnObjects();
+	void SpawnSetup(float spawnPositionX, float spawnPositionZ);
 
 	/*
 	 * Scene Physics
@@ -63,7 +65,6 @@ public:
 	glm::vec3 CalculateAccelerationVector(glm::vec3& normal);
 	void VelocityUpdate(std::shared_ptr<Actor>& objectToUpdate, const glm::vec3& acceleration, float deltaTime);
 	bool BarycentricCalculations(std::shared_ptr<Actor>& objectToCheck, glm::vec3 targetedPos, glm::vec3& newPositionVector, glm::vec3& normal);
-
 
 	/*
 	 * Member variables and unordered maps
@@ -76,7 +77,7 @@ public:
 	Shader* mShader = new Shader("core/shader/Shader.vs", "core/shader/Shader.fs");
 	float mNpcSpeed{ 5.f };
 	std::chrono::time_point<std::chrono::high_resolution_clock> previousTime;
-    float deltaTime;
+	float deltaTime;
 	bool hasSetNewLine{ false };
 	bool shouldRenderWireframe{ false };
 
@@ -86,6 +87,11 @@ public:
 	glm::vec3 maxCubeExtent;
 	int octreeCapacity = 8;
 
+	/*Terrain Variables*/
+	glm::vec3 minTerrainLimit{ 0.f, 0.f, 0.f, };
+	glm::vec3 maxTerrainLimit{ 0.f, 0.f, 0.f, };
+	int objectsSpawned{0};
+
 	/*NPC Varibles*/
 	int currentVertexIndex;
 	bool movingForward;
@@ -93,13 +99,13 @@ public:
 	float npcMovementSpeed;
 
 	/*Physics Variables*/
-	bool shouldSimualtePhysics {false};
+	bool shouldSimualtePhysics{ false };
 
 	/*Material variables*/
-	glm::vec3 ambient {1.f, 1.f, 1.f};
-	glm::vec3 diffuse {1.f, 1.f, 1.f};
-	glm::vec3 specular {1.f, 1.f, 1.f};
-	float shininess {1.0f};
+	glm::vec3 ambient{ 1.f, 1.f, 1.f };
+	glm::vec3 diffuse{ 1.f, 1.f, 1.f };
+	glm::vec3 specular{ 1.f, 1.f, 1.f };
+	float shininess{ 1.0f };
 
 	/*Pointers*/
 	std::unique_ptr<RandomNumberGenerator> RandomNumberGenerator;
