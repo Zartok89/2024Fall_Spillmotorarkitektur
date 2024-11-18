@@ -40,23 +40,23 @@ public:
 	void LoadMeshes();
 	//void LoadMaterials();
 	void LoadActors();
-	void LoadVariables();
 
 	/*
 	 * Scene logic
 	 */
 	void ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std::shared_ptr<Actor>>::value_type& actors);
-	// Collision logic //
+	/*Collision logic*/
 	void HandleSceneCollision(float deltaTime);
 	std::vector<CollisionInfo> DetectAllCollisions();
 	void ResolveCollision(const CollisionInfo& collision);
-	void BoxAgainstBoxCollision(float deltaTime, std::shared_ptr<Actor>& actor);
-	// Pathing logic //
-	bool NpcFollowCurve(float deltaTime, std::shared_ptr<Actor>& actors, std::string meshToFollow, std::string actorOffset);
-	// Helper logic //
+
+	/*Helper functions*/
 	glm::vec3 CalculateReflection(const glm::vec3& velocity, const glm::vec3& normal);
 	void SpawnObjects();
 	void SpawnSetup(float spawnPositionX, float spawnPositionZ);
+	void DrawBSplineCurve();
+	float BSplineBasis(int i, int degree, float t, const std::vector<float>& knots);
+
 
 	/*
 	 * Scene Physics
@@ -66,6 +66,7 @@ public:
 	void VelocityUpdate(std::shared_ptr<Actor>& objectToUpdate, const glm::vec3& acceleration, float deltaTime);
 	bool BarycentricCalculations(std::shared_ptr<Actor>& objectToCheck, glm::vec3 targetedPos, glm::vec3& newPositionVector, glm::vec3& normal);
 	void FrictionUpdate(std::shared_ptr<Actor>& objectToUpdate, float deltaTime, const glm::vec3& normal);
+
 	/*
 	 * Member variables and unordered maps
 	 */
@@ -74,7 +75,6 @@ public:
 	std::unordered_map<std::string, std::shared_ptr<Actor>> mSceneActors;
 	std::unordered_map<std::string, std::shared_ptr<Actor>> mSceneBallActors;
 	Shader* mShader = new Shader("core/shader/Shader.vs", "core/shader/Shader.fs");
-	float mNpcSpeed{ 5.f };
 	std::chrono::time_point<std::chrono::high_resolution_clock> previousTime;
 	float deltaTime;
 	bool hasSetNewLine{ false };
@@ -88,6 +88,7 @@ public:
 
 	/*Physics Variables*/
 	bool shouldSimualtePhysics{ false };
+	std::vector<glm::vec3> ballPositions;
 
 	/*Material variables*/
 	glm::vec3 ambient{ 1.f, 1.f, 1.f };

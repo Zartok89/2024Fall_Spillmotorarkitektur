@@ -2,7 +2,6 @@
 
 #include <memory>
 #include <glm/glm.hpp>
-#include <glm/gtx/compatibility.hpp>
 #include "Scene.h"
 #include "graphical/Material.h"
 
@@ -65,8 +64,12 @@ void Scene::RenderScene()
 		shouldRenderWireframe ? mSceneMeshes[actors.second->mName]->setWireframe = true : mSceneMeshes[actors.second->mName]->setWireframe = false;
 
 		mSceneMeshes[actors.second->mName]->RenderMesh();
+
+		// Drawing the B-spline curve
+		DrawBSplineCurve();
 	}
 
+	// Handling the scene collision
 	HandleSceneCollision(deltaTime);
 }
 
@@ -90,7 +93,6 @@ void Scene::LoadScene()
 	LoadTextures();
 	LoadMeshes();
 	LoadActors();
-	LoadVariables();
 }
 
 // Texture loading, adding them into an unordered map
@@ -128,17 +130,9 @@ void Scene::LoadActors()
 	CustomArea = mSceneActors["PunktSky"]->mMeshInfo->customArea;
 }
 
-void Scene::LoadVariables()
+void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std::shared_ptr<Actor>>::value_type& actors)
 {
-	currentVertexIndex = 0;
-	movingForward = true;
-	interpolateFactor = 1.0f;
-	npcMovementSpeed = 2.f;
-}
-
-void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std::shared_ptr<Actor>>::value_type& actorEntry)
-{
-	auto& actor = actorEntry.second;
+	auto& actor = actors.second;
 	glm::mat4 transform;
 
 	switch (actor->mActorType)
@@ -375,6 +369,86 @@ void Scene::SpawnSetup(float spawnPositionX, float spawnPositionZ)
 	objectsSpawned++;
 }
 
+void Scene::DrawBSplineCurve()
+{
+
+	    // Return if there are not enough points
+    if (ballPositions.size() < 2) { return; }
+
+    // Draw the line using OpenGL
+    glLineWidth(2.0f);
+    glBegin(GL_LINE_STRIP);
+    for (const auto& point : ballPositions)
+    {
+        glVertex3f(point.x, point.y, point.z);
+    }
+    glEnd();
+
+
+    //// Return if there are not enough control points
+    //if (ballPositions.size() < 4) { return; }
+
+    //// Amount of control points
+    //int numControlPoints = ballPositions.size();
+
+    //// B-spline degree
+    //int degree = 3;
+
+    //// Amount of points on the curve
+    //int numCurvePoints = 100;
+
+    //// Knot vector
+    //std::vector<float> knots(numControlPoints + degree + 1);
+    //for (int i = 0; i <= degree; ++i)
+    //{
+    //    knots[i] = 0.0f;
+    //}
+    //for (int i = degree + 1; i < numControlPoints; ++i)
+    //{
+    //    knots[i] = static_cast<float>(i - degree) / (numControlPoints - degree);
+    //}
+    //for (int i = numControlPoints; i <= numControlPoints + degree; ++i)
+    //{
+    //    knots[i] = 1.0f;
+    //}
+
+    //// Generate points
+    //std::vector<glm::vec3> curvePoints(numCurvePoints);
+    //for (int i = 0; i < numCurvePoints; ++i)
+    //{
+    //    float t = static_cast<float>(i) / (numCurvePoints - 1);
+    //    curvePoints[i] = glm::vec3(0.0f);
+    //    for (int j = 0; j < numControlPoints; ++j)
+    //    {
+    //        float basis = BSplineBasis(j, degree, t, knots);
+    //        curvePoints[i] += basis * ballPositions[j];
+    //    }
+    //}
+
+    //// Draw the B-spline curve using OpenGL
+    //glLineWidth(2.0f);
+    //glBegin(GL_LINE_STRIP);
+    //for (const auto& point : curvePoints)
+    //{
+    //    glVertex3f(point.x, point.y, point.z);
+    //}
+    //glEnd();
+}
+
+float Scene::BSplineBasis(int i, int degree, float t, const std::vector<float>& knots)
+{
+	if (degree == 0)
+	{
+		return (knots[i] <= t && t < knots[i + 1]) ? 1.0f : 0.0f;
+	}
+	else
+	{
+		float left = (t - knots[i]) / (knots[i + degree] - knots[i]);
+		float right = (knots[i + degree + 1] - t) / (knots[i + degree + 1] - knots[i + 1]);
+		return left * BSplineBasis(i, degree - 1, t, knots) + right * BSplineBasis(i + 1, degree - 1, t, knots);
+	}
+}
+
 void Scene::ObjectPhysics(std::shared_ptr<Actor>& objectToUpdate, float deltaTime, glm::vec3& normal)
 {
 	// Calculate the acceleration and velocity for the actor based on the normal
@@ -387,6 +461,23 @@ void Scene::ObjectPhysics(std::shared_ptr<Actor>& objectToUpdate, float deltaTim
 	glm::vec3 newPosition = position + positionChange;
 
 	objectToUpdate->SetActorPosition({ newPosition.x, position.y, newPosition.z });
+
+	// Only add the position if the ball is moving and there is a significant change in x or z
+	if (glm::length(velocity) > 0.01f)
+	{
+		if (ballPositions.empty() || glm::abs(newPosition.x - ballPositions.back().x) >= 0.5f || glm::abs(newPosition.z - ballPositions.back().z) >= 0.5f)
+		{
+			// Adding the ball's position to a new vector for tracing
+			std::cout << "Updated position: " << newPosition.x << ", " << position.y << ", " << newPosition.z << "\n";
+			ballPositions.emplace_back(newPosition.x, position.y, newPosition.z);
+
+			// Limit the number of points stored
+			if (ballPositions.size() > 100)
+			{
+				ballPositions.erase(ballPositions.begin());
+			}
+		}
+	}
 
 	// Updating the velocity based on friction if object is within custom area bounds
 	if (newPosition.x < CustomArea[0].maxBounds.x && newPosition.x > CustomArea[0].minBounds.x &&
@@ -407,19 +498,10 @@ glm::vec3 Scene::CalculateAccelerationVector(glm::vec3& normal)
 	const float g = 0.981f;
 
 	// Calculate the acceleration vector using the given formula
-	glm::vec3 gravity(0.0f, g * 2, 0.0f); // Gravity acts downwards in the y direction
+	glm::vec3 gravity(0.0f, g * 2, 0.0f);
 	glm::vec3 accelerationVector = glm::dot(gravity, normalizedNormal) * normalizedNormal;
 
 	return accelerationVector;
-
-	// ----------------
-	//// Calculate the acceleration vector using the given formula
-	//glm::vec3 accelerationVector = glm::vec3(normalizedNormal.x * normalizedNormal.y, normalizedNormal.z * normalizedNormal.y, normalizedNormal.y * normalizedNormal.y - 1);
-	//glm::vec3 accelerationVectorGravity = glm::vec3(g * accelerationVector.x, g * accelerationVector.y, g * accelerationVector.z);
-
-	//// Store the result in the member variable
-	//mAcellerationVector = accelerationVectorGravity;
-	//std::cout << "Acceleration vector: " << accelerationVector.x << ", " << accelerationVector.y << ", " << accelerationVector.z << "\n";
 }
 
 void Scene::VelocityUpdate(std::shared_ptr<Actor>& objectToUpdate, const glm::vec3& acceleration, float deltaTime)
