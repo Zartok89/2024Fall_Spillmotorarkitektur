@@ -64,9 +64,25 @@ void Scene::RenderScene()
 		shouldRenderWireframe ? mSceneMeshes[actors.second->mName]->setWireframe = true : mSceneMeshes[actors.second->mName]->setWireframe = false;
 
 		mSceneMeshes[actors.second->mName]->RenderMesh();
+	}
 
-		// Drawing the B-spline curve
-		DrawBSplineCurve();
+	for (auto& actors : mBSplineActors)
+	{
+		mSceneMeshes[actors.second->mName]->mMeshShader->use();
+
+		if (actors.second->mUseTexture == true)
+		{
+			glActiveTexture(GL_TEXTURE0);
+			mSceneTextures[actors.second->mTexture]->BindTextures();
+			mShader->setInt("texture1", 0);
+		}
+		mShader->setBool("useTexture", actors.second->mUseTexture);
+
+		ActorSceneLogic(deltaTime, actors);
+
+		shouldRenderWireframe ? mSceneMeshes[actors.second->mName]->setWireframe = true : mSceneMeshes[actors.second->mName]->setWireframe = false;
+
+		mSceneMeshes[actors.second->mName]->RenderMesh();
 	}
 
 	// Handling the scene collision
@@ -81,6 +97,11 @@ void Scene::Update(float deltaTime)
 	}
 
 	for (auto& actors : mSceneBallActors)
+	{
+		ActorSceneLogic(deltaTime, actors);
+	}
+
+	for (auto& actors : mBSplineActors)
 	{
 		ActorSceneLogic(deltaTime, actors);
 	}
@@ -116,6 +137,10 @@ void Scene::LoadMeshes()
 	mSceneMeshes["FlatTerrainMesh"] = std::make_shared<Mesh>(MeshShape::TERRAIN_FLAT, mShader);
 	mSceneMeshes["CurvedTerrainMesh"] = std::make_shared<Mesh>(MeshShape::TERRAIN_CURVED, mShader);
 	mSceneMeshes["PunktSkyMesh"] = std::make_shared<Mesh>(MeshShape::PUNKTSKY, mShader);
+	mSceneMeshes["BSplineMesh"] = std::make_shared<Mesh>(MeshShape::BSPLINE, mShader);
+
+	// Generate placeholder B-spline curve
+	mSceneMeshes["BSplineMesh"]->GeneratePlaceholderBSplineCurve();
 }
 
 // Actor loading, adding them into a vector of actors
@@ -138,6 +163,13 @@ void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std
 	switch (actor->mActorType)
 	{
 	case Actor::STATIC:
+		transform = actor->GetActorTransform();
+		mShader->setMat4("model", transform);
+		break;
+
+	case Actor::SPLINE:
+		// Drawing the B-spline curve
+		DrawBSplineCurve(actor);
 		transform = actor->GetActorTransform();
 		mShader->setMat4("model", transform);
 		break;
@@ -366,87 +398,32 @@ void Scene::SpawnObjects()
 void Scene::SpawnSetup(float spawnPositionX, float spawnPositionZ)
 {
 	mSceneBallActors["Object" + std::to_string(objectsSpawned)] = (std::make_shared<Actor>("SphereMesh", mSceneMeshes["SphereMesh"], glm::vec3{ spawnPositionX, 130.f, spawnPositionZ }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::DYNAMICOBJECT, mShader, false, ""));
+	mBSplineActors["Spline" + std::to_string(objectsSpawned)] = (std::make_shared<Actor>("BSplineMesh", mSceneMeshes["BSplineMesh"], glm::vec3{ spawnPositionX, 130.f, spawnPositionZ }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::SPLINE, mShader, false, ""));
 	objectsSpawned++;
 }
 
-void Scene::DrawBSplineCurve()
+void Scene::DeleteObjects()
 {
+	for (auto& objects : mSceneMeshes)
+	{
+		mSceneMeshes.clear();
+	}
 
-	    // Return if there are not enough points
-    if (ballPositions.size() < 2) { return; }
-
-    // Draw the line using OpenGL
-    glLineWidth(2.0f);
-    glBegin(GL_LINE_STRIP);
-    for (const auto& point : ballPositions)
-    {
-        glVertex3f(point.x, point.y, point.z);
-    }
-    glEnd();
-
-
-    //// Return if there are not enough control points
-    //if (ballPositions.size() < 4) { return; }
-
-    //// Amount of control points
-    //int numControlPoints = ballPositions.size();
-
-    //// B-spline degree
-    //int degree = 3;
-
-    //// Amount of points on the curve
-    //int numCurvePoints = 100;
-
-    //// Knot vector
-    //std::vector<float> knots(numControlPoints + degree + 1);
-    //for (int i = 0; i <= degree; ++i)
-    //{
-    //    knots[i] = 0.0f;
-    //}
-    //for (int i = degree + 1; i < numControlPoints; ++i)
-    //{
-    //    knots[i] = static_cast<float>(i - degree) / (numControlPoints - degree);
-    //}
-    //for (int i = numControlPoints; i <= numControlPoints + degree; ++i)
-    //{
-    //    knots[i] = 1.0f;
-    //}
-
-    //// Generate points
-    //std::vector<glm::vec3> curvePoints(numCurvePoints);
-    //for (int i = 0; i < numCurvePoints; ++i)
-    //{
-    //    float t = static_cast<float>(i) / (numCurvePoints - 1);
-    //    curvePoints[i] = glm::vec3(0.0f);
-    //    for (int j = 0; j < numControlPoints; ++j)
-    //    {
-    //        float basis = BSplineBasis(j, degree, t, knots);
-    //        curvePoints[i] += basis * ballPositions[j];
-    //    }
-    //}
-
-    //// Draw the B-spline curve using OpenGL
-    //glLineWidth(2.0f);
-    //glBegin(GL_LINE_STRIP);
-    //for (const auto& point : curvePoints)
-    //{
-    //    glVertex3f(point.x, point.y, point.z);
-    //}
-    //glEnd();
+	for (auto& objects : mBSplineActors)
+	{
+		mSceneMeshes.clear();
+	}
 }
 
-float Scene::BSplineBasis(int i, int degree, float t, const std::vector<float>& knots)
+void Scene::DrawBSplineCurve(std::shared_ptr<Actor>& objectToUpdate)
 {
-	if (degree == 0)
+	auto& mesh = objectToUpdate->mMeshInfo;
+	std::vector<glm::vec3> positions;
+	for (const auto& vertex : mesh->mVertices)
 	{
-		return (knots[i] <= t && t < knots[i + 1]) ? 1.0f : 0.0f;
+		positions.push_back(vertex.mPosition);
 	}
-	else
-	{
-		float left = (t - knots[i]) / (knots[i + degree] - knots[i]);
-		float right = (knots[i + degree + 1] - t) / (knots[i + degree + 1] - knots[i + 1]);
-		return left * BSplineBasis(i, degree - 1, t, knots) + right * BSplineBasis(i + 1, degree - 1, t, knots);
-	}
+	mesh->GenerateBSplineCurve(positions);
 }
 
 void Scene::ObjectPhysics(std::shared_ptr<Actor>& objectToUpdate, float deltaTime, glm::vec3& normal)
@@ -465,17 +442,21 @@ void Scene::ObjectPhysics(std::shared_ptr<Actor>& objectToUpdate, float deltaTim
 	// Only add the position if the ball is moving and there is a significant change in x or z
 	if (glm::length(velocity) > 0.01f)
 	{
-		if (ballPositions.empty() || glm::abs(newPosition.x - ballPositions.back().x) >= 0.5f || glm::abs(newPosition.z - ballPositions.back().z) >= 0.5f)
+		auto& mesh = objectToUpdate->mMeshInfo;
+		if (mesh->mVertices.empty() || glm::abs(newPosition.x - mesh->mVertices.back().mPosition.x) >= 0.5f || glm::abs(newPosition.z - mesh->mVertices.back().mPosition.z) >= 0.5f)
 		{
-			// Adding the ball's position to a new vector for tracing
-			std::cout << "Updated position: " << newPosition.x << ", " << position.y << ", " << newPosition.z << "\n";
-			ballPositions.emplace_back(newPosition.x, position.y, newPosition.z);
+			// Adding the ball's position to the mesh's vertices for tracing
+			//std::cout << "Updated position: " << newPosition.x << ", " << position.y << ", " << newPosition.z << "\n";
+			mesh->mVertices.emplace_back(newPosition, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(0.0f));
 
 			// Limit the number of points stored
-			if (ballPositions.size() > 100)
+			if (mesh->mVertices.size() > 100)
 			{
-				ballPositions.erase(ballPositions.begin());
+				mesh->mVertices.erase(mesh->mVertices.begin());
 			}
+
+			// Update the mesh with the new vertices
+			mesh->MeshSetup();
 		}
 	}
 

@@ -20,9 +20,8 @@ enum MeshShape
 	CUBECOLOR,
 	TERRAIN_FLAT,
 	TERRAIN_CURVED,
-	BSPLINEBASIS,
-	BSPLINEBIQUADRIC,
-	PUNKTSKY
+	PUNKTSKY,
+	BSPLINE
 };
 
 class CustomArea
@@ -122,6 +121,9 @@ public:
 	void GenerateMathCurveFunctions2(float resolution, float startX, float endX);
 	void GenerateFlatTerrain(float terrainWidth, float terrainDepth, int divisionsWidth, int divisionsDepth);
 	void GenerateCurvedTerrain(float planeWidth, float planeDepth, int divisionsWidth, int divisionsDepth);
+	void GeneratePlaceholderBSplineCurve();
+	void GenerateBSplineCurve(std::vector<glm::vec3>& positionVector);
+	float BSplineBasis(int i, int degree, float t, const std::vector<float>& knots);
 
 	/*
 	 * Point Cloud Generation and Triangulation
@@ -137,7 +139,6 @@ public:
 	*/
 	std::pair<glm::vec3, glm::vec3> CalculateBoxExtent();
 	float CalculateRadius();
-	//std::pair<glm::vec3, glm::vec3> CalculateBoxExtent(std::vector<Vertex>& BoxVertVector);
 
 	/*
 	 * Member Variables

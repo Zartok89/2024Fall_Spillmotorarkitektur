@@ -54,8 +54,8 @@ public:
 	glm::vec3 CalculateReflection(const glm::vec3& velocity, const glm::vec3& normal);
 	void SpawnObjects();
 	void SpawnSetup(float spawnPositionX, float spawnPositionZ);
-	void DrawBSplineCurve();
-	float BSplineBasis(int i, int degree, float t, const std::vector<float>& knots);
+	void DeleteObjects();
+	void DrawBSplineCurve(std::shared_ptr<Actor>& objectToUpdate);
 
 
 	/*
@@ -74,6 +74,7 @@ public:
 	std::unordered_map<std::string, std::shared_ptr<Mesh>> mSceneMeshes;
 	std::unordered_map<std::string, std::shared_ptr<Actor>> mSceneActors;
 	std::unordered_map<std::string, std::shared_ptr<Actor>> mSceneBallActors;
+	std::unordered_map<std::string, std::shared_ptr<Actor>> mBSplineActors;
 	Shader* mShader = new Shader("core/shader/Shader.vs", "core/shader/Shader.fs");
 	std::chrono::time_point<std::chrono::high_resolution_clock> previousTime;
 	float deltaTime;

@@ -156,4 +156,9 @@ void Controller::GeneralInputs(double dt)
 	{
 		scenePtr->SpawnObjects();
 	}
+
+	if (glfwGetKey(mWindow, GLFW_KEY_U) == GLFW_PRESS)
+	{
+		scenePtr->DeleteObjects();
+	}
 }

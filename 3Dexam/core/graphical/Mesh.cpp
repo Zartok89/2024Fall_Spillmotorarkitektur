@@ -53,7 +53,11 @@ Mesh::Mesh(MeshShape meshShape, Shader* meshShader) : mMeshShape(meshShape), mMe
 		break;
 
 	case MeshShape::PUNKTSKY:
-		CreateMeshFromPointCloud(150, false, {1.f, 1.f, 1.f});
+		CreateMeshFromPointCloud(150, false, { 1.f, 1.f, 1.f });
+		break;
+
+	case MeshShape::BSPLINE:
+		GeneratePlaceholderBSplineCurve();
 		break;
 
 	default:
@@ -79,28 +83,28 @@ void Mesh::RenderMesh()
 
 	// If the mesh is a line or a point, it will only use the vertices array, else draw with indices
 	glBindVertexArray(mVAO);
-	//if (mMeshShape == MeshShape::LINE || mMeshShape == MeshShape::LINECURVE)
-	//{
-	//	//glLineWidth(8.f);
-	//	glDrawArrays(GL_LINE_STRIP, 0, mVertices.size());
-	//	//glLineWidth(5.f);
-	//	glDrawArrays(GL_POINTS, 0, mVertices.size());
-	//}
+	if (mMeshShape == MeshShape::LINE || mMeshShape == MeshShape::LINECURVE || mMeshShape == MeshShape::BSPLINE)
+	{
+		glLineWidth(3.f);
+		glDrawArrays(GL_LINE_STRIP, 0, mVertices.size());
+		glPointSize(2.f);
+		glDrawArrays(GL_POINTS, 0, mVertices.size());
+	}
 	//if (mMeshShape == MeshShape::PUNKTSKY)
 	//{
 	//	glPointSize(7.f);
 	//	glDrawArrays(GL_POINTS, 0, mVertices.size());
 	//}
-	//else
-	if (setWireframe)
-	{
-		glLineWidth(3.f);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	}
 	else
-	{
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	}
+		if (setWireframe)
+		{
+			glLineWidth(3.f);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		}
+		else
+		{
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
 
 	glDrawElements(GL_TRIANGLES, mIndices.size(), GL_UNSIGNED_INT, 0);
 }
@@ -115,7 +119,7 @@ void Mesh::MeshSetup()
 	glBindBuffer(GL_ARRAY_BUFFER, mVBO);
 	glBufferData(GL_ARRAY_BUFFER, mVertices.size() * sizeof(Vertex), mVertices.data(), GL_STATIC_DRAW);
 
-	if (mMeshShape != MeshShape::LINE)
+	if (mMeshShape != MeshShape::LINE || mMeshShape == MeshShape::BSPLINE)
 	{
 		glGenBuffers(1, &mEBO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mEBO);
@@ -284,7 +288,7 @@ void Mesh::SphereMesh(float radius, int sectorCount, int stackCount)
 			t = (float)i / stackCount;
 
 			//mVertices.emplace_back(Vertex({ x, y, z }, { nx, ny, nz }, { s, t }));
-			mVertices.emplace_back(Vertex({ x, y, z }, {1.f, 0.f, 0.f}, { nx, ny, nz }));
+			mVertices.emplace_back(Vertex({ x, y, z }, { 1.f, 0.f, 0.f }, { nx, ny, nz }));
 		}
 	}
 
@@ -427,6 +431,80 @@ void Mesh::GenerateCurvedTerrain(float planeWidth, float planeDepth, int divisio
 	}
 }
 
+void Mesh::GeneratePlaceholderBSplineCurve()
+{
+	// Placeholder control points
+	std::vector<glm::vec3> placeholderPoints = {
+		{ -1.0f, 0.0f, 0.0f },
+		{ -0.5f, 1.0f, 0.0f },
+		{ 0.5f, -1.0f, 0.0f },
+		{ 1.0f, 0.0f, 0.0f }
+	};
+
+	// Generate the B-spline curve using the placeholder points
+	GenerateBSplineCurve(placeholderPoints);
+}
+
+void Mesh::GenerateBSplineCurve(std::vector<glm::vec3>& positionVector)
+{
+    // Amount of control points
+    int numControlPoints = positionVector.size();
+
+    // B-spline degree
+    int degree = 3;
+
+    // Amount of points on the curve
+    int numCurvePoints = 10;
+
+    // Knot vector
+    std::vector<float> knots(numControlPoints + degree + 1);
+    for (int i = 0; i <= degree; ++i)
+    {
+        knots[i] = 0.0f;
+    }
+    for (int i = degree + 1; i < numControlPoints; ++i)
+    {
+        knots[i] = static_cast<float>(i - degree) / (numControlPoints - degree);
+    }
+    for (int i = numControlPoints; i <= numControlPoints + degree; ++i)
+    {
+        knots[i] = 1.0f;
+    }
+
+    // Clear previous vertices
+    mVertices.clear();
+
+    // Generate points
+    for (int i = 0; i < numCurvePoints; ++i)
+    {
+        float t = static_cast<float>(i) / (numCurvePoints - 1);
+        glm::vec3 curvePoint(0.0f);
+        for (int j = 0; j < numControlPoints; ++j)
+        {
+            float basis = BSplineBasis(j, degree, t, knots);
+            curvePoint += basis * positionVector[j];
+        }
+        mVertices.emplace_back(curvePoint, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(0.0f)); // Add the generated point to mVertices
+    }
+
+    // Update the mesh with the new vertices
+    MeshSetup();
+}
+
+float Mesh::BSplineBasis(int i, int degree, float t, const std::vector<float>& knots)
+{
+	if (degree == 0)
+	{
+		return (knots[i] <= t && t < knots[i + 1]) ? 1.0f : 0.0f;
+	}
+	else
+	{
+		float left = (t - knots[i]) / (knots[i + degree] - knots[i]);
+		float right = (knots[i + degree + 1] - t) / (knots[i + degree + 1] - knots[i + 1]);
+		return left * BSplineBasis(i, degree - 1, t, knots) + right * BSplineBasis(i + 1, degree - 1, t, knots);
+	}
+}
+
 void Mesh::CreateMeshFromPointCloud(int resolution, bool usingBSpling, glm::vec3 cloudScale)
 {
 	// Loading vertices from file into a temp vector
@@ -511,9 +589,8 @@ void Mesh::CreateMeshFromPointCloud(int resolution, bool usingBSpling, glm::vec3
 	std::cout << "Triangulated vertices normal calculated\n";
 
 	// Storing terrain min and max limits from the new mVertices vector
-	for (const auto& vertices : mVertices )
+	for (const auto& vertices : mVertices)
 	{
-		
 		minTerrainLimit = glm::min(minTerrainLimit, vertices.mPosition);
 		maxTerrainLimit = glm::max(maxTerrainLimit, vertices.mPosition);
 	}
@@ -555,7 +632,7 @@ void Mesh::GenerateAndPopulateGrid(int resolution, std::vector<Vertex>& tempVert
 	std::cout << "Grid populated\n";
 
 	// Custom area for friction
-	customArea.emplace_back(glm::vec3{-40.0f, 0.0f, 0.0f}, glm::vec3{-30.0f, 0.0f, 10.0f}, glm::vec3{0.0f, 0.0f, 1.0f}, 0.5f);
+	customArea.emplace_back(glm::vec3{ -40.0f, 0.0f, 0.0f }, glm::vec3{ -30.0f, 0.0f, 10.0f }, glm::vec3{ 0.0f, 0.0f, 1.0f }, 0.5f);
 
 	// Iterate over the grid to calculate average positions and colors
 	for (int i = 0; i < resolution; ++i)
@@ -628,18 +705,18 @@ void Mesh::GenerateAndPopulateGrid(int resolution, std::vector<Vertex>& tempVert
 			}
 
 			// Check if the current position is within the custom area
-            for (const auto& area : customArea)
-            {
-                if (posX >= area.minBounds.x && posX <= area.maxBounds.x &&
-                    posZ >= area.minBounds.z && posZ <= area.maxBounds.z)
-                {
-                    avgColor = area.color;
+			for (const auto& area : customArea)
+			{
+				if (posX >= area.minBounds.x && posX <= area.maxBounds.x &&
+					posZ >= area.minBounds.z && posZ <= area.maxBounds.z)
+				{
+					avgColor = area.color;
 					//terrainFriction = area.areaFriction;
-                }
-            }
+				}
+			}
 
 			// Add the averaged vertex to the mesh
-			mVertices.emplace_back(posX*cloudScale.x, avgY*cloudScale.y, posZ*cloudScale.z, avgColor.r, avgColor.g, avgColor.b);
+			mVertices.emplace_back(posX * cloudScale.x, avgY * cloudScale.y, posZ * cloudScale.z, avgColor.r, avgColor.g, avgColor.b);
 		}
 		int percentageComplete = (i / static_cast<float>(resolution)) * 100;
 		std::cout << "Grid generation " << percentageComplete << "% complete" << "\n";

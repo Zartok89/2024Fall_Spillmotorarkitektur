@@ -14,12 +14,8 @@ public:
 	enum ActorType
 	{
 		STATIC,
-		PICKUP,
-		NPC,
-		NPC_FOLLOWCURVE,
-		NPC_FOLLOWLINE,
-		CURVETOFOLLOW,
-		DYNAMICOBJECT,
+		SPLINE,
+		DYNAMICOBJECT
 	};
 
 	/*
