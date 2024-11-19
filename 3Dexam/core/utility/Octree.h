@@ -36,8 +36,4 @@ public:
     void Subdivide();  
     void Query(const AABB& range, std::vector<std::shared_ptr<Actor>>& found) const;
     void Clear();
-
-    //void CollectAABBs(const std::unique_ptr<OctreeNode>& node, std::vector<AABB>& aabbs);
-    //std::vector<glm::vec3> GenerateWireframeCube(const AABB& box);
-    //void RenderOctree(const std::unique_ptr<OctreeNode>& octree);
 };  

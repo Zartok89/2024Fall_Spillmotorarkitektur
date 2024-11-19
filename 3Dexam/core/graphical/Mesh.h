@@ -163,7 +163,6 @@ public:
 	glm::vec3 minTerrainLimit{ 0.f, 0.f, 0.f, };
 	glm::vec3 maxTerrainLimit{ 0.f, 0.f, 0.f, };
 	std::vector<CustomArea> customArea;
-	//float terrainFriction{0.f};
 
 	/*BiQuadratic Spline Variables*/
 	float B0(float t) { return 0.5f * (1 - t) * (1 - t); }

@@ -71,8 +71,6 @@ void Mesh::RenderMesh()
 {
 	mMeshShader->setInt("texture1", 0);
 
-	//create accelleration for object
-
 	// Set static light properties
 	mMeshShader->setVec3("lightPos", lightPos);
 	mMeshShader->setVec3("lightColor", lightColor);
@@ -479,7 +477,7 @@ void Mesh::GenerateBSplineCurve(std::vector<glm::vec3>& positionVector)
 			float basis = BSplineBasis(j, degree, t, knots);
 			curvePoint += basis * positionVector[j];
 		}
-		mVertices.emplace_back(curvePoint.x, curvePoint.y, curvePoint.z, 0.f, 1.f, 0.f); // Add the generated point to mVertices
+		mVertices.emplace_back(curvePoint.x, curvePoint.y, curvePoint.z, 0.f, 1.f, 0.f);
 	}
 
 	// Update the mesh with the new vertices
@@ -497,16 +495,16 @@ float Mesh::BSplineBasis(int i, int degree, float t, const std::vector<float>& k
 		float left = 0.0f;
 		float right = 0.0f;
 
-		float denominatorLeft = knots[i + degree] - knots[i];
-		if (denominatorLeft != 0.0f)
+		float dLeft = knots[i + degree] - knots[i];
+		if (dLeft != 0.0f)
 		{
-			left = (t - knots[i]) / denominatorLeft * BSplineBasis(i, degree - 1, t, knots);
+			left = (t - knots[i]) / dLeft * BSplineBasis(i, degree - 1, t, knots);
 		}
 
-		float denominatorRight = knots[i + degree + 1] - knots[i + 1];
-		if (denominatorRight != 0.0f)
+		float dRight = knots[i + degree + 1] - knots[i + 1];
+		if (dRight != 0.0f)
 		{
-			right = (knots[i + degree + 1] - t) / denominatorRight * BSplineBasis(i + 1, degree - 1, t, knots);
+			right = (knots[i + degree + 1] - t) / dRight * BSplineBasis(i + 1, degree - 1, t, knots);
 		}
 
 		return left + right;

@@ -145,11 +145,8 @@
     <None Include="core\shader\Shader.vs">
       <Filter>core\shader</Filter>
     </None>
-    <None Include="core\shader\wireframe.vs" />
-    <None Include="core\shader\wireframe.fs" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Hoydedata.txt" />
-    <Text Include="NewMapData.txt" />
+    <Text Include="TerrainData.txt" />
   </ItemGroup>
 </Project>
