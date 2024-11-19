@@ -62,7 +62,7 @@ public:
 	glm::vec3 mBoxExtendMax{ 0.f, 0.f, 0.f };
 	glm::vec3 mBoxExtendCenter{ 0.f, 0.f, 0.f };
 	float mActorSpeed{ 20.f };
-
+	std::shared_ptr<Actor> ballPtr;
 	// Pointers
 	std::unique_ptr<RandomNumberGenerator> RandomNumberGenerator;
 

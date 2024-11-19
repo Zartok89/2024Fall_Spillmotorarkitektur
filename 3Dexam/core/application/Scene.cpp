@@ -25,6 +25,14 @@ void Scene::RenderScene()
 		deltaTime = maxDeltaTime;
 	}
 
+	// Spline update timer
+	splineTimer += deltaTime;
+	if (splineTimer > 1)
+	{
+		splineTimer = 0;
+		timerEnabled = true;
+	}
+
 	Update(deltaTime);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -87,6 +95,8 @@ void Scene::RenderScene()
 
 	// Handling the scene collision
 	HandleSceneCollision(deltaTime);
+
+	timerEnabled = false;
 }
 
 void Scene::Update(float deltaTime)
@@ -138,16 +148,11 @@ void Scene::LoadMeshes()
 	mSceneMeshes["CurvedTerrainMesh"] = std::make_shared<Mesh>(MeshShape::TERRAIN_CURVED, mShader);
 	mSceneMeshes["PunktSkyMesh"] = std::make_shared<Mesh>(MeshShape::PUNKTSKY, mShader);
 	mSceneMeshes["BSplineMesh"] = std::make_shared<Mesh>(MeshShape::BSPLINE, mShader);
-
-	// Generate placeholder B-spline curve
-	mSceneMeshes["BSplineMesh"]->GeneratePlaceholderBSplineCurve();
 }
 
 // Actor loading, adding them into a vector of actors
 void Scene::LoadActors()
 {
-	//mSceneActors["bSplineBasis"] = (std::make_shared<Actor>("bSplineBasisMesh", mSceneMeshes["bSplineBasisMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 3.f, Actor::ActorType::STATIC, mShader, false, ""));
-
 	/*Terrain*/
 	mSceneActors["PunktSky"] = (std::make_shared<Actor>("PunktSkyMesh", mSceneMeshes["PunktSkyMesh"], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::STATIC, mShader, false, ""));
 	minTerrainLimit = mSceneActors["PunktSky"]->mMeshInfo->minTerrainLimit;
@@ -167,13 +172,6 @@ void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std
 		mShader->setMat4("model", transform);
 		break;
 
-	case Actor::SPLINE:
-		// Drawing the B-spline curve
-		DrawBSplineCurve(actor);
-		transform = actor->GetActorTransform();
-		mShader->setMat4("model", transform);
-		break;
-
 	case Actor::DYNAMICOBJECT:
 		glm::vec3 objectHeight;
 		glm::vec3 objectNormal;
@@ -186,6 +184,13 @@ void Scene::ActorSceneLogic(float deltaTime, std::unordered_map<std::string, std
 				//std::cout << actor->GetActorPosition().x << ", " << actor->GetActorPosition().y << ", " << actor->GetActorPosition().z << "\n";
 			}
 		}
+		transform = actor->GetActorTransform();
+		mShader->setMat4("model", transform);
+		break;
+
+	case Actor::SPLINE:
+		// Drawing the B-spline curve
+		DrawBSplineCurve(actor);
 		transform = actor->GetActorTransform();
 		mShader->setMat4("model", transform);
 		break;
@@ -378,8 +383,8 @@ glm::vec3 Scene::CalculateReflection(const glm::vec3& velocity, const glm::vec3&
 
 void Scene::SpawnObjects()
 {
-	int spawnPositionX = 0;
-	int spawnPositionZ = 0;
+	float spawnPositionX = 0;
+	float spawnPositionZ = 0;
 	std::cout << "Enter a position between (" << minTerrainLimit.x << ", " << minTerrainLimit.z << ") and (" << maxTerrainLimit.x << ", " << maxTerrainLimit.z << ") \n";
 	std::cout << "X position: "; std::cin >> spawnPositionX;
 	std::cout << "Z position: "; std::cin >> spawnPositionZ;
@@ -397,33 +402,31 @@ void Scene::SpawnObjects()
 
 void Scene::SpawnSetup(float spawnPositionX, float spawnPositionZ)
 {
+	mSceneMeshes["BSplineMesh" + std::to_string(objectsSpawned)] = std::make_shared<Mesh>(MeshShape::BSPLINE, mShader);
 	mSceneBallActors["Object" + std::to_string(objectsSpawned)] = (std::make_shared<Actor>("SphereMesh", mSceneMeshes["SphereMesh"], glm::vec3{ spawnPositionX, 130.f, spawnPositionZ }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::DYNAMICOBJECT, mShader, false, ""));
-	mBSplineActors["Spline" + std::to_string(objectsSpawned)] = (std::make_shared<Actor>("BSplineMesh", mSceneMeshes["BSplineMesh"], glm::vec3{ spawnPositionX, 130.f, spawnPositionZ }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::SPLINE, mShader, false, ""));
+	mBSplineActors["Spline" + std::to_string(objectsSpawned)] = (std::make_shared<Actor>("BSplineMesh" + std::to_string(objectsSpawned), mSceneMeshes["BSplineMesh" + std::to_string(objectsSpawned)], glm::vec3{ 0.f, 0.f, 0.f }, glm::vec3{ 1.f, 0.f, 0.f }, 0.f, 1.f, Actor::ActorType::SPLINE, mShader, false, ""));
+	mBSplineActors["Spline" + std::to_string(objectsSpawned)]->ballPtr = mSceneBallActors["Object" + std::to_string(objectsSpawned)];
 	objectsSpawned++;
 }
 
 void Scene::DeleteObjects()
 {
-	for (auto& objects : mSceneMeshes)
+	if (!mSceneBallActors.empty())
 	{
-		mSceneMeshes.clear();
+		mSceneBallActors.clear();
 	}
-
-	for (auto& objects : mBSplineActors)
+	if (!mBSplineActors.empty())
 	{
-		mSceneMeshes.clear();
+		mBSplineActors.clear();
 	}
 }
 
 void Scene::DrawBSplineCurve(std::shared_ptr<Actor>& objectToUpdate)
 {
+	if (!timerEnabled) return;
+	std::string objectName = objectToUpdate->mName;
 	auto& mesh = objectToUpdate->mMeshInfo;
-	std::vector<glm::vec3> positions;
-	for (const auto& vertex : mesh->mVertices)
-	{
-		positions.push_back(vertex.mPosition);
-	}
-	mesh->GenerateBSplineCurve(positions);
+	mesh->GenerateBSplineCurve(ballPositions[objectToUpdate->ballPtr]);
 }
 
 void Scene::ObjectPhysics(std::shared_ptr<Actor>& objectToUpdate, float deltaTime, glm::vec3& normal)
@@ -442,21 +445,10 @@ void Scene::ObjectPhysics(std::shared_ptr<Actor>& objectToUpdate, float deltaTim
 	// Only add the position if the ball is moving and there is a significant change in x or z
 	if (glm::length(velocity) > 0.01f)
 	{
-		auto& mesh = objectToUpdate->mMeshInfo;
-		if (mesh->mVertices.empty() || glm::abs(newPosition.x - mesh->mVertices.back().mPosition.x) >= 0.5f || glm::abs(newPosition.z - mesh->mVertices.back().mPosition.z) >= 0.5f)
+		if (timerEnabled)
 		{
-			// Adding the ball's position to the mesh's vertices for tracing
+			ballPositions[objectToUpdate].emplace_back(newPosition.x, position.y, newPosition.z);
 			//std::cout << "Updated position: " << newPosition.x << ", " << position.y << ", " << newPosition.z << "\n";
-			mesh->mVertices.emplace_back(newPosition, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(0.0f));
-
-			// Limit the number of points stored
-			if (mesh->mVertices.size() > 100)
-			{
-				mesh->mVertices.erase(mesh->mVertices.begin());
-			}
-
-			// Update the mesh with the new vertices
-			mesh->MeshSetup();
 		}
 	}
 

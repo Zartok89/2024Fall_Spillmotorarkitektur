@@ -96,6 +96,7 @@ void Mesh::RenderMesh()
 	//	glDrawArrays(GL_POINTS, 0, mVertices.size());
 	//}
 	else
+	{
 		if (setWireframe)
 		{
 			glLineWidth(3.f);
@@ -105,8 +106,8 @@ void Mesh::RenderMesh()
 		{
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
-
-	glDrawElements(GL_TRIANGLES, mIndices.size(), GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, mIndices.size(), GL_UNSIGNED_INT, 0);
+	}
 }
 
 void Mesh::MeshSetup()
@@ -119,7 +120,7 @@ void Mesh::MeshSetup()
 	glBindBuffer(GL_ARRAY_BUFFER, mVBO);
 	glBufferData(GL_ARRAY_BUFFER, mVertices.size() * sizeof(Vertex), mVertices.data(), GL_STATIC_DRAW);
 
-	if (mMeshShape != MeshShape::LINE || mMeshShape == MeshShape::BSPLINE)
+	if (mMeshShape != MeshShape::BSPLINE)
 	{
 		glGenBuffers(1, &mEBO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mEBO);
@@ -287,7 +288,6 @@ void Mesh::SphereMesh(float radius, int sectorCount, int stackCount)
 			s = (float)j / sectorCount;
 			t = (float)i / stackCount;
 
-			//mVertices.emplace_back(Vertex({ x, y, z }, { nx, ny, nz }, { s, t }));
 			mVertices.emplace_back(Vertex({ x, y, z }, { 1.f, 0.f, 0.f }, { nx, ny, nz }));
 		}
 	}
@@ -434,12 +434,7 @@ void Mesh::GenerateCurvedTerrain(float planeWidth, float planeDepth, int divisio
 void Mesh::GeneratePlaceholderBSplineCurve()
 {
 	// Placeholder control points
-	std::vector<glm::vec3> placeholderPoints = {
-		{ -1.0f, 0.0f, 0.0f },
-		{ -0.5f, 1.0f, 0.0f },
-		{ 0.5f, -1.0f, 0.0f },
-		{ 1.0f, 0.0f, 0.0f }
-	};
+	std::vector<glm::vec3> placeholderPoints = {};
 
 	// Generate the B-spline curve using the placeholder points
 	GenerateBSplineCurve(placeholderPoints);
@@ -447,48 +442,48 @@ void Mesh::GeneratePlaceholderBSplineCurve()
 
 void Mesh::GenerateBSplineCurve(std::vector<glm::vec3>& positionVector)
 {
-    // Amount of control points
-    int numControlPoints = positionVector.size();
+	// Amount of control points
+	int numControlPoints = positionVector.size();
 
-    // B-spline degree
-    int degree = 3;
+	// B-spline degree
+	int degree = 3;
 
-    // Amount of points on the curve
-    int numCurvePoints = 10;
+	// Amount of points on the curve
+	int numCurvePoints = 100;
 
-    // Knot vector
-    std::vector<float> knots(numControlPoints + degree + 1);
-    for (int i = 0; i <= degree; ++i)
-    {
-        knots[i] = 0.0f;
-    }
-    for (int i = degree + 1; i < numControlPoints; ++i)
-    {
-        knots[i] = static_cast<float>(i - degree) / (numControlPoints - degree);
-    }
-    for (int i = numControlPoints; i <= numControlPoints + degree; ++i)
-    {
-        knots[i] = 1.0f;
-    }
+	// Knot vector
+	std::vector<float> knots(numControlPoints + degree + 1);
+	for (int i = 0; i <= degree; ++i)
+	{
+		knots[i] = 0.0f;
+	}
+	for (int i = degree + 1; i < numControlPoints; ++i)
+	{
+		knots[i] = static_cast<float>(i - degree) / (numControlPoints - degree);
+	}
+	for (int i = numControlPoints; i <= numControlPoints + degree; ++i)
+	{
+		knots[i] = 1.0f;
+	}
 
-    // Clear previous vertices
-    mVertices.clear();
+	// Clear previous vertices
+	mVertices.clear();
 
-    // Generate points
-    for (int i = 0; i < numCurvePoints; ++i)
-    {
-        float t = static_cast<float>(i) / (numCurvePoints - 1);
-        glm::vec3 curvePoint(0.0f);
-        for (int j = 0; j < numControlPoints; ++j)
-        {
-            float basis = BSplineBasis(j, degree, t, knots);
-            curvePoint += basis * positionVector[j];
-        }
-        mVertices.emplace_back(curvePoint, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(0.0f)); // Add the generated point to mVertices
-    }
+	// Generate points
+	for (int i = 0; i < numCurvePoints; ++i)
+	{
+		float t = static_cast<float>(i) / (numCurvePoints - 1);
+		glm::vec3 curvePoint(0.0f);
+		for (int j = 0; j < numControlPoints; ++j)
+		{
+			float basis = BSplineBasis(j, degree, t, knots);
+			curvePoint += basis * positionVector[j];
+		}
+		mVertices.emplace_back(curvePoint.x, curvePoint.y, curvePoint.z, 0.f, 1.f, 0.f); // Add the generated point to mVertices
+	}
 
-    // Update the mesh with the new vertices
-    MeshSetup();
+	// Update the mesh with the new vertices
+	MeshSetup();
 }
 
 float Mesh::BSplineBasis(int i, int degree, float t, const std::vector<float>& knots)
@@ -499,9 +494,22 @@ float Mesh::BSplineBasis(int i, int degree, float t, const std::vector<float>& k
 	}
 	else
 	{
-		float left = (t - knots[i]) / (knots[i + degree] - knots[i]);
-		float right = (knots[i + degree + 1] - t) / (knots[i + degree + 1] - knots[i + 1]);
-		return left * BSplineBasis(i, degree - 1, t, knots) + right * BSplineBasis(i + 1, degree - 1, t, knots);
+		float left = 0.0f;
+		float right = 0.0f;
+
+		float denominatorLeft = knots[i + degree] - knots[i];
+		if (denominatorLeft != 0.0f)
+		{
+			left = (t - knots[i]) / denominatorLeft * BSplineBasis(i, degree - 1, t, knots);
+		}
+
+		float denominatorRight = knots[i + degree + 1] - knots[i + 1];
+		if (denominatorRight != 0.0f)
+		{
+			right = (knots[i + degree + 1] - t) / denominatorRight * BSplineBasis(i + 1, degree - 1, t, knots);
+		}
+
+		return left + right;
 	}
 }
 

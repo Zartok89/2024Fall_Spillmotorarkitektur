@@ -57,7 +57,6 @@ public:
 	void DeleteObjects();
 	void DrawBSplineCurve(std::shared_ptr<Actor>& objectToUpdate);
 
-
 	/*
 	 * Scene Physics
 	 */
@@ -80,16 +79,19 @@ public:
 	float deltaTime;
 	bool hasSetNewLine{ false };
 	bool shouldRenderWireframe{ false };
+	float splineTimer{ 0 };
+	float splineTimer2{ 0 };
+	bool timerEnabled{ false };
 
 	/*Terrain Variables*/
 	glm::vec3 minTerrainLimit{ 0.f, 0.f, 0.f, };
 	glm::vec3 maxTerrainLimit{ 0.f, 0.f, 0.f, };
-	int objectsSpawned{0};
+	int objectsSpawned{ 0 };
 	std::vector<CustomArea> CustomArea;
 
 	/*Physics Variables*/
 	bool shouldSimualtePhysics{ false };
-	std::vector<glm::vec3> ballPositions;
+	std::unordered_map<std::shared_ptr<Actor>, std::vector<glm::vec3>> ballPositions;
 
 	/*Material variables*/
 	glm::vec3 ambient{ 1.f, 1.f, 1.f };
