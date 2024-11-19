@@ -44,14 +44,6 @@ Mesh::Mesh(MeshShape meshShape, Shader* meshShader) : mMeshShape(meshShape), mMe
 		SphereMesh(1.f, 20, 20);
 		break;
 
-	case MeshShape::TERRAIN_FLAT:
-		GenerateFlatTerrain(mTerrainWidth, mTerrainDepth, mTerrainDivisionsWidth, mTerrainDivisionsDepth);
-		break;
-
-	case MeshShape::TERRAIN_CURVED:
-		GenerateCurvedTerrain(mTerrainWidth, mTerrainDepth, mTerrainDivisionsWidth, mTerrainDivisionsDepth);
-		break;
-
 	case MeshShape::PUNKTSKY:
 		CreateMeshFromPointCloud(150, false, { 1.f, 1.f, 1.f });
 		break;
@@ -341,91 +333,6 @@ void Mesh::GenerateMathCurveFunctions2(float resolution, float startX, float end
 	for (float a = 0; a <= mVertices.size() / 3; a++)
 	{
 		mIndices.emplace_back(a);
-	}
-}
-
-void Mesh::GenerateFlatTerrain(float terrainWidth, float terrainDepth, int divisionsWidth, int divisionsDepth)
-{
-	int vertexCountWidth = divisionsWidth + 1;
-	int vertexCountDepth = divisionsDepth + 1;
-
-	float midWidth = terrainWidth / 2.0f;
-	float midDepth = terrainDepth / 2.0f;
-	float deltaX = terrainWidth / divisionsWidth;
-	float deltaZ = terrainDepth / divisionsDepth;
-
-	// Constructing the grid vertices
-	for (int depthIndex = 0; depthIndex < vertexCountDepth; ++depthIndex)
-	{
-		float zCoord = midDepth - depthIndex * deltaZ;
-		for (int widthIndex = 0; widthIndex < vertexCountWidth; ++widthIndex)
-		{
-			float xCoord = -midWidth + widthIndex * deltaX;
-			mVertices.emplace_back(xCoord, 0.0f, zCoord, 0.0f, 0.5f, 0.1f, xCoord, zCoord);
-		}
-	}
-
-	// Creating indices for rendering grid cells as two triangles
-	for (int depth = 0; depth < divisionsDepth; ++depth)
-	{
-		for (int width = 0; width < divisionsWidth; ++width)
-		{
-			unsigned int currentRowStart = depth * vertexCountWidth;
-			unsigned int nextRowStart = (depth + 1) * vertexCountWidth;
-
-			// First triangle of the grid cell
-			mIndices.emplace_back(currentRowStart + width);
-			mIndices.emplace_back(nextRowStart + width);
-			mIndices.emplace_back(currentRowStart + width + 1);
-
-			// Second triangle of the grid cell
-			mIndices.emplace_back(currentRowStart + width + 1);
-			mIndices.emplace_back(nextRowStart + width);
-			mIndices.emplace_back(nextRowStart + width + 1);
-		}
-	}
-}
-void Mesh::GenerateCurvedTerrain(float planeWidth, float planeDepth, int divisionsWidth, int divisionsDepth) {
-	int vertexCountWidth = divisionsWidth + 1;
-	int vertexCountDepth = divisionsDepth + 1;
-
-	float midWidth = planeWidth / 2.0f;
-	float midDepth = planeDepth / 2.0f;
-	float deltaX = planeWidth / divisionsWidth;
-	float deltaZ = planeDepth / divisionsDepth;
-
-	// Constructing the grid vertices
-	for (int depthIndex = 0; depthIndex < vertexCountDepth; ++depthIndex)
-	{
-		float zCoord = midDepth - depthIndex * deltaZ;
-		for (int widthIndex = 0; widthIndex < vertexCountWidth; ++widthIndex)
-		{
-			float xCoord = -midWidth + widthIndex * deltaX;
-
-			// Calculate yCoord based on the given mathematical function
-			float yCoord = sin(xCoord) * cos(zCoord) * ((xCoord + zCoord) / 10.0f);
-			mVertices.push_back(Vertex(xCoord, yCoord, zCoord, 1.0f, 1.0f, 1.0f, xCoord, zCoord));
-		}
-	}
-
-	// Creating indices for rendering grid cells as two triangles
-	for (int depth = 0; depth < divisionsDepth; ++depth)
-	{
-		for (int width = 0; width < divisionsWidth; ++width)
-		{
-			unsigned int currentRowStart = depth * vertexCountWidth;
-			unsigned int nextRowStart = (depth + 1) * vertexCountWidth;
-
-			// First triangle of the grid cell
-			mIndices.push_back(currentRowStart + width);
-			mIndices.push_back(nextRowStart + width);
-			mIndices.push_back(currentRowStart + width + 1);
-
-			// Second triangle of the grid cell
-			mIndices.push_back(currentRowStart + width + 1);
-			mIndices.push_back(nextRowStart + width);
-			mIndices.push_back(nextRowStart + width + 1);
-		}
 	}
 }
 

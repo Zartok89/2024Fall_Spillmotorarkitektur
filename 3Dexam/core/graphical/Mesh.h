@@ -18,8 +18,6 @@ enum MeshShape
 	CUBE,
 	SPHERE,
 	CUBECOLOR,
-	TERRAIN_FLAT,
-	TERRAIN_CURVED,
 	PUNKTSKY,
 	BSPLINE
 };
@@ -119,8 +117,6 @@ public:
 	 */
 	void GenerateMathCurveFunctions(float resolution, float startX, float endX);
 	void GenerateMathCurveFunctions2(float resolution, float startX, float endX);
-	void GenerateFlatTerrain(float terrainWidth, float terrainDepth, int divisionsWidth, int divisionsDepth);
-	void GenerateCurvedTerrain(float planeWidth, float planeDepth, int divisionsWidth, int divisionsDepth);
 	void GeneratePlaceholderBSplineCurve();
 	void GenerateBSplineCurve(std::vector<glm::vec3>& positionVector);
 	float BSplineBasis(int i, int degree, float t, const std::vector<float>& knots);
@@ -155,10 +151,6 @@ public:
 	Shader* mMeshShader;
 
 	/*Terrain settings*/
-	float mTerrainWidth{ 80.f };
-	float mTerrainDepth{ 40.f };
-	float mTerrainDivisionsWidth{ 40.f };
-	float mTerrainDivisionsDepth{ 20.f };
 	bool setWireframe{ false };
 	glm::vec3 minTerrainLimit{ 0.f, 0.f, 0.f, };
 	glm::vec3 maxTerrainLimit{ 0.f, 0.f, 0.f, };
